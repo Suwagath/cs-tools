@@ -23,6 +23,7 @@ export class APIService {
   private static _cancelTokenSource = axios.CancelToken.source();
   private static _callback: () => Promise<{ idToken: string }>;
   private static _initialized = false;
+  private static _authInterceptorId: number | null = null;
 
   constructor(idToken: string, callback: () => Promise<{ idToken: string }>) {
     APIService._instance = axios.create({
@@ -45,7 +46,10 @@ export class APIService {
       onRetryAttempt: async (err) => {
         var res = await callback();
         APIService.updateTokens(res.idToken);
-        APIService._instance.interceptors.request.clear();
+        // Eject only the auth interceptor, not all interceptors
+        if (APIService._authInterceptorId !== null) {
+          APIService._instance.interceptors.request.eject(APIService._authInterceptorId);
+        }
         APIService.updateRequestInterceptor();
       },
     };
@@ -85,9 +89,14 @@ export class APIService {
   }
 
   private static updateRequestInterceptor() {
-    APIService._instance.interceptors.request.use(
+    // Eject any previously registered auth interceptor to avoid duplicates
+    if (APIService._authInterceptorId !== null) {
+      APIService._instance.interceptors.request.eject(APIService._authInterceptorId);
+    }
+    
+    // Register new auth interceptor and store its ID
+    APIService._authInterceptorId = APIService._instance.interceptors.request.use(
       async (config) => {
-        
         // Only add auth header if we have a callback (i.e., user is authenticated)
         if (APIService._callback && APIService._initialized) {
           try {
