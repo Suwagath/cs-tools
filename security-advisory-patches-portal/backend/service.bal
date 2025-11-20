@@ -28,7 +28,6 @@ service / on new http:Listener(8080) {
 
     # Service initialization - Runs health checks if enabled.
     function init() {
-        log:printInfo("Starting Security Advisories FileShare Backend on port 8080");
             error? fsHealth = file_storage:healthCheck();
             if fsHealth is error {
                 log:printError("Startup failed: File storage health check failed", fsHealth);
