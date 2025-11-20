@@ -97,7 +97,7 @@ const Header: React.FC<HeaderProps> = ({
               onClick={() => window.location.href = '/'}
             />
             <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              Security Advisories Patches Portal
+              Security Advisory Patches Portal
             </Typography>
           </Box>
 
