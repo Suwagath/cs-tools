@@ -60,30 +60,44 @@ const FileViewer: React.FC<FileViewerProps> = ({ file, onClose }) => {
   // Fetch file content for preview when component mounts
   useEffect(() => {
     let objectUrl = '';
+    let isMounted = true;
     
     const fetchFileContent = async () => {
       setIsLoadingPreview(true);
       const result = await dispatch(downloadFile(file.name));
       
-      if (downloadFile.fulfilled.match(result)) {
+      // Only update state if component is still mounted and file hasn't changed
+      if (isMounted && downloadFile.fulfilled.match(result)) {
         const fileData = result.payload.data;
         
         // Create object URL for preview
         objectUrl = URL.createObjectURL(fileData);
         setPreviewUrl(objectUrl);
       }
-      setIsLoadingPreview(false);
+      
+      if (isMounted) {
+        setIsLoadingPreview(false);
+      }
     };
 
     fetchFileContent();
 
     return () => {
+      // Mark component as unmounted to prevent stale updates
+      isMounted = false;
+      
       // Clean up object URL to prevent memory leaks
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
       }
+      
+      // Clean up the preview URL if it exists
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        setPreviewUrl('');
+      }
     };
-  }, [dispatch, file.name, extension, fileName]);
+  }, [dispatch, file.name]);
 
   const handleDownload = () => {
     // If we already have the preview URL (object URL from file data), use it
