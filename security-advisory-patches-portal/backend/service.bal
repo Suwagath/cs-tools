@@ -87,7 +87,7 @@ service / on new http:Listener(8080) {
         };
     }
 
-     # Get directory content from Azure File Share
+    # Get directory content from Azure File Share
     #
     # + path - Optional directory path to list contents from
     # + return - Array of FileShareItem or error response
@@ -96,7 +96,7 @@ service / on new http:Listener(8080) {
         // Use empty string if path is not provided
         string dirPath = path ?: "";
         
-        // Validate path format using regex
+        // Validate path format
         if !dirPath.matches(re `${ALLOWED_PATH_PATTERN}`) {
             log:printError(string `Invalid path format: ${dirPath}`);
             return <http:BadRequest>{
@@ -120,7 +120,15 @@ service / on new http:Listener(8080) {
     # + path - Full path to the file
     # + return - HTTP response with file content or error
     resource function get file(string path) returns http:Response|
-    http:InternalServerError {
+    http:BadRequest|http:InternalServerError {
+        // Validate path format
+        if !path.matches(re `${ALLOWED_PATH_PATTERN}`) {
+            log:printError(string `Invalid path format: ${path}`);
+            return <http:BadRequest>{
+                body: {message: ERR_MSG_INVALID_PATH}
+            };
+        }
+
         byte[]|error fileBytes = file_storage:downloadFile(path);
         if fileBytes is error {
             log:printError(string `Failed to download file: ${path}`, fileBytes);
