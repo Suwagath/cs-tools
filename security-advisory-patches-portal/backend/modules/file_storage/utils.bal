@@ -138,7 +138,7 @@ public isolated function getContentType(string fileName) returns string {
 # + path - Path to encode
 # + return - URL-encoded path
 public isolated function encodePathSegments(string path) returns string|error {
-    string[] parts = re `/`.split(path);
+    string[] parts = re `${FOLDER_DELIMITER}`.split(path);
     string[] encoded = [];
     
     foreach string p in parts {
@@ -146,7 +146,7 @@ public isolated function encodePathSegments(string path) returns string|error {
         encoded.push(ep);
     }
     
-    return string:'join("/", ...encoded);
+    return string:'join(FOLDER_DELIMITER, ...encoded);
 }
 
 # Create a directory item.
