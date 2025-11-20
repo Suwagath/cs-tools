@@ -91,10 +91,22 @@ const fileSlice = createSlice({
   initialState,
   reducers: {
     setCurrentPath: (state, action: PayloadAction<string>) => {
-      state.currentPath = action.payload;
-      state.pathSegments = action.payload
-        ? action.payload.split('/').filter((s) => s.length > 0)
+      // Normalize the path: trim whitespace and remove duplicate/trailing slashes
+      let cleanedPath = action.payload.trim();
+      
+      // Remove duplicate slashes
+      cleanedPath = cleanedPath.replace(/\/+/g, '/');
+      
+      // Remove leading and trailing slashes for splitting
+      cleanedPath = cleanedPath.replace(/^\/+|\/+$/g, '');
+      
+      // Compute path segments from cleaned path
+      state.pathSegments = cleanedPath.length > 0
+        ? cleanedPath.split('/').filter((s) => s.length > 0)
         : [];
+      
+      // Ensure currentPath ends with a single '/' if non-empty
+      state.currentPath = cleanedPath.length > 0 ? cleanedPath + '/' : '';
     },
     setSelectedFile: (state, action: PayloadAction<FileItem | null>) => {
       state.selectedFile = action.payload;
