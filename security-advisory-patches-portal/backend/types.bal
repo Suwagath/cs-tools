@@ -33,16 +33,4 @@ public type UnhealthyResponse record {|
     string status;
     # Error message
     string message;
-    # Detailed error information
-    string details;
-|};
-
-# CORS configuration.
-public type CorsConfig record {|
-    # List of allowed origins
-    string[] allowOrigins;
-    # List of allowed HTTP methods
-    string[] allowMethods;
-    # List of allowed headers
-    string[] allowHeaders;
 |};

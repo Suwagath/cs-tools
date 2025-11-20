@@ -70,8 +70,7 @@ service / on new http:Listener(8080) {
             return <http:ServiceUnavailable>{
                 body: {
                     status: "unhealthy",
-                    message: "File storage service is unavailable",
-                    details: fileStorageHealth.message()
+                    message: "File storage service is unavailable"
                 }
             };
         }
