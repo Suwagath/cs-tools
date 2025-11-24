@@ -14,9 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string ERR_MSG_INVALID_PATH = "Invalid path parameter";
-const string ERR_MSG_PATH_TOO_LONG = "Path exceeds maximum allowed length";
-const string FOLDER_DELIMITER = "/";
-const int MAX_PATH_LENGTH = 2048;
+const ERR_MSG_INVALID_PATH = "Invalid path parameter";
+const ERR_MSG_PATH_TOO_LONG = "Path exceeds maximum allowed length";
+const FOLDER_DELIMITER = "/";
+const MAX_PATH_LENGTH = 2048;
 
 
