@@ -36,11 +36,6 @@ public isolated function validatePath(string path) returns error? {
 
 # Normalizes a directory path for use with Azure SDK or general purposes.
 #
-# - Strips leading delimiter.
-# - Ensures trailing delimiter is present.
-# - If `forSdkCall` is true: removes trailing delimiter and URL-encodes the path (required by Azure SDK, which expects paths without trailing delimiters).
-# - If `forSdkCall` is false: keeps trailing delimiter and does not encode.
-#
 # + path - Directory path to normalize
 # + forSdkCall - If true, normalizes for Azure SDK (removes trailing delimiter and URL-encodes); if false, keeps trailing delimiter and does not encode
 # + return - Normalized (and optionally encoded) path or error
