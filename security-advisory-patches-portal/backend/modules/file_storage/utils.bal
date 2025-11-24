@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import ballerina/url;
 import ballerinax/azure_storage_service.files as files;
 
@@ -26,11 +25,11 @@ public isolated function validatePath(string path) returns error? {
     if path == "" {
         return;
     }
-    
+
     if path.length() > MAX_PATH_LENGTH {
         return error(ERR_MSG_PATH_TOO_LONG);
     }
-    
+
     return;
 }
 
@@ -43,15 +42,15 @@ public isolated function normalizePath(string path, boolean forSdkCall = false) 
     if path == "" {
         return "";
     }
-    
+
     // Remove leading delimiter if present
     string normalized = path.startsWith(FOLDER_DELIMITER) ? path.substring(1) : path;
-    
+
     // Add trailing delimiter if not present
     if !normalized.endsWith(FOLDER_DELIMITER) {
         normalized = normalized + FOLDER_DELIMITER;
     }
-    
+
     // For SDK calls, remove the trailing delimiter and URL-encode
     if forSdkCall {
         if normalized.endsWith(FOLDER_DELIMITER) {
@@ -60,7 +59,7 @@ public isolated function normalizePath(string path, boolean forSdkCall = false) 
         // URL encode for Azure API
         normalized = check encodePathSegments(normalized);
     }
-    
+
     return normalized;
 }
 
@@ -117,7 +116,7 @@ const map<string> CONTENT_TYPE_MAP = {
 public isolated function getContentType(string fileName) returns string {
     // Normalize to lower case for case-insensitive matching
     string lowerFileName = fileName.toLowerAscii();
-    
+
     // Find the last dot to extract extension
     int? lastDotIndex = lowerFileName.lastIndexOf(".");
     if lastDotIndex is int && lastDotIndex < lowerFileName.length() - 1 {
@@ -127,7 +126,7 @@ public isolated function getContentType(string fileName) returns string {
             return contentType;
         }
     }
-    
+
     return "application/octet-stream";
 }
 
@@ -139,12 +138,12 @@ public isolated function getContentType(string fileName) returns string {
 public isolated function encodePathSegments(string path) returns string|error {
     string[] parts = re `${FOLDER_DELIMITER}`.split(path);
     string[] encoded = [];
-    
+
     foreach string p in parts {
         string ep = check url:encode(p, "UTF-8");
         encoded.push(ep);
     }
-    
+
     return string:'join(FOLDER_DELIMITER, ...encoded);
 }
 
@@ -166,18 +165,18 @@ public isolated function createDirectoryItem(string directoryName) returns FileS
 public isolated function createFileItem(files:File file) returns FileShareItem {
     int fileSize = 0;
     string contentType = getContentType(file.Name);
-    
+
     // Extract metadata from File Properties if available
     files:PropertiesFileItem|""? props = file.Properties;
     if props is files:PropertiesFileItem {
         fileSize = extractFileSize(props);
-        
+
         string? extractedContentType = extractContentType(props);
         if extractedContentType is string {
             contentType = extractedContentType;
         }
     }
-    
+
     return {
         name: file.Name,
         isFolder: false,
@@ -192,14 +191,14 @@ public isolated function createFileItem(files:File file) returns FileShareItem {
 # + return - File size in bytes
 public isolated function extractFileSize(files:PropertiesFileItem props) returns int {
     anydata|""? contentLengthVal = props["Content-Length"];
-    
+
     if contentLengthVal is int {
         return contentLengthVal;
     } else if contentLengthVal is string {
         int|error parsedSize = int:fromString(contentLengthVal);
         return parsedSize is int ? parsedSize : 0;
     }
-    
+
     return 0;
 }
 
@@ -211,5 +210,4 @@ public isolated function extractContentType(files:PropertiesFileItem props) retu
     anydata|""? contentTypeVal = props["Content-Type"];
     return contentTypeVal is string ? contentTypeVal : ();
 }
-
 

@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 # Health check response when service is healthy.
 public type HealthyResponse record {|
     # Health status (healthy/unhealthy)

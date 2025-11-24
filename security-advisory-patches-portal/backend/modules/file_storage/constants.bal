@@ -19,4 +19,3 @@ const ERR_MSG_PATH_TOO_LONG = "Path exceeds maximum allowed length";
 const FOLDER_DELIMITER = "/";
 const MAX_PATH_LENGTH = 2048;
 
-

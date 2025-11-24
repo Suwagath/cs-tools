@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import ballerinax/azure_storage_service.files as files;
 
 # Perform health check by verifying connectivity to Azure File Share.
@@ -33,7 +32,7 @@ public isolated function healthCheck() returns error? {
 public isolated function listItems(string path = "") returns FileShareItem[]|error {
     // Normalize and encode path for SDK call
     string normalizedPath = check normalizePath(path, forSdkCall = true);
-    
+
     FileShareItem[] items = [];
 
     // List directories - empty result is not an error
@@ -43,11 +42,11 @@ public isolated function listItems(string path = "") returns FileShareItem[]|err
     } else {
         dirResult = fileClient->getDirectoryList(fileShareName, normalizedPath);
     }
-    
+
     if dirResult is files:DirectoryList {
         files:Directory|files:Directory[] directories = dirResult.Directory;
         files:Directory[] dirArray = directories is files:Directory[] ? directories : [directories];
-        
+
         foreach files:Directory d in dirArray {
             items.push(createDirectoryItem(d.Name));
         }
@@ -61,11 +60,11 @@ public isolated function listItems(string path = "") returns FileShareItem[]|err
     } else {
         fileResult = fileClient->getFileList(fileShareName, normalizedPath);
     }
-    
+
     if fileResult is files:FileList {
         files:File|files:File[] fileList = fileResult.File;
         files:File[] fileArray = fileList is files:File[] ? fileList : [fileList];
-        
+
         foreach files:File f in fileArray {
             items.push(createFileItem(f));
         }
@@ -92,13 +91,13 @@ public isolated function downloadFile(string filePath) returns byte[]|error {
 
     // Encode file name for Azure API
     string encodedName = check encodePathSegments(fileName);
-    
+
     if dirPath == "" {
         return check fileClient->getFileAsByteArray(fileShareName, encodedName);
     }
-    
+
     // Normalize and encode directory path for SDK call
     string normalizedDir = check normalizePath(dirPath, forSdkCall = true);
-    
+
     return check fileClient->getFileAsByteArray(fileShareName, encodedName, normalizedDir);
 }

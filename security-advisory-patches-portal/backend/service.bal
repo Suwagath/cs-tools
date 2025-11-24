@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import security_advisories_fileshare.file_storage;
 
 import ballerina/http;
@@ -63,7 +62,7 @@ service / on new http:Listener(9090) {
         };
     }
 
-    # Get directory content from Azure File Share
+    # Get directory content from Azure File Share.
     #
     # + path - Optional directory path to list contents from
     # + return - Array of FileShareItem or error response
@@ -91,7 +90,7 @@ service / on new http:Listener(9090) {
         return items;
     }
 
-    # Get file content from Azure File Share
+    # Get file content from Azure File Share.
     #
     # + path - Full path to the file
     # + return - HTTP response with file content or error
