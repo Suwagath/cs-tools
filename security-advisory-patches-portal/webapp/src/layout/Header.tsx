@@ -15,6 +15,7 @@
 // under the License.
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -46,6 +47,7 @@ const Header: React.FC<HeaderProps> = ({
   username = 'User',
   onLogout,
 }) => {
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const menuOpen = Boolean(anchorEl);
@@ -94,7 +96,7 @@ const Header: React.FC<HeaderProps> = ({
                 marginRight: 16,
                 cursor: 'pointer',
               }}
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
             />
             <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
               Security Advisory Patches Portal
