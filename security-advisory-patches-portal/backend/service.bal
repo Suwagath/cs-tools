@@ -42,11 +42,12 @@ service / on new http:Listener(9090) {
         // Check file storage connectivity
         error? fileStorageHealth = file_storage:healthCheck();
         if fileStorageHealth is error {
-            log:printError("Health check failed: File storage unavailable", fileStorageHealth);
+            string customError = "Health check failed: File storage unavailable";
+            log:printError(customError, fileStorageHealth);
             return <http:ServiceUnavailable>{
                 body: {
                     status: "unhealthy",
-                    message: "File storage service is unavailable"
+                    message: customError
                 }
             };
         }
