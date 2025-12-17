@@ -22,6 +22,6 @@ const string ERR_MSG_LIST_SECURITY_ADVISORIES = "Error occurred while retrieving
 const string ERR_MSG_DOWNLOAD_SECURITY_ADVISORY = "Error occurred while downloading security advisory";
 const string ERR_MSG_INVALID_PATH = "Invalid path format";
 
-// Path validation regex - allows alphanumeric, hyphens, underscores, dots, spaces, and forward slashes
-const string ALLOWED_PATH_PATTERN = "^[a-zA-Z0-9\\-_\\.\\s/]*$";
+// Path validation regex - allows alphanumeric, hyphens, underscores, dots, spaces, URL-encoded chars, and forward slashes
+const string ALLOWED_PATH_PATTERN = "^[a-zA-Z0-9\\-_\\.\\s%0-9A-Fa-f/]*$";
 
