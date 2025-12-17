@@ -30,39 +30,36 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 /**
- * Convert segment to URL-friendly format (spaces -> hyphens, preserve real hyphens)
- * Uses a marker to distinguish real hyphens from space-hyphens
+ * Convert segment to URL-encoded format using standard URL encoding
  * @param segment - Original segment (e.g., "August Special" or "August-Special")
- * @returns URL-friendly segment (e.g., "August-Special" or "August--Special")
+ * @returns URL-encoded segment (e.g., "August%20Special" or "August-Special")
  */
 export const toUrlFriendly = (segment: string): string => {
-  // First, escape existing hyphens by doubling them
-  const escapedHyphens = segment.replace(/-/g, '--');
-  // Then replace spaces with single hyphens
-  return escapedHyphens.replace(/ /g, '-');
+  return encodeURIComponent(segment);
 };
 
 /**
- * Convert URL-friendly segment back to original format
- * @param segment - URL segment (e.g., "August-Special" or "August--Special")
+ * Convert URL-encoded segment back to original format
+ * @param segment - URL-encoded segment (e.g., "August%20Special" or "August-Special")
  * @returns Original segment (e.g., "August Special" or "August-Special")
  */
 export const fromUrlFriendly = (segment: string): string => {
-  // First, replace single hyphens (from spaces) with spaces
-  const withSpaces = segment.replace(/-/g, ' ');
-  // Then, restore double spaces (from real hyphens) back to single hyphens
-  return withSpaces.replace(/ {2}/g, '-');
+  return decodeURIComponent(segment);
 };
 
 /**
  * Parse path segments from URL path
- * @param path - URL path (e.g., "August-Special/file.pdf")
- * @returns Array of path segments with original names restored
+ * @param path - URL path (e.g., "patches/August-Special/file.pdf")
+ * @returns Array of path segments with original names restored, excluding the 'patches' prefix
  */
 export const parsePathSegments = (path: string): string[] => {
   if (!path) return [];
   const segments = path.split('/').filter((segment) => segment.length > 0);
-  return segments.map((segment) => fromUrlFriendly(segment));
+
+  // Remove 'patches' prefix if it exists (for backward compatibility with old portal URLs)
+  const filteredSegments = segments[0] === 'patches' ? segments.slice(1) : segments;
+
+  return filteredSegments.map((segment) => fromUrlFriendly(segment));
 };
 
 /**
@@ -76,20 +73,20 @@ export const buildPath = (segments: string[]): string => {
 };
 
 /**
- * Build URL path from path segments (spaces -> hyphens)
+ * Build URL path from path segments with /patches prefix for backward compatibility
  * @param segments - Array of path segments
  * @param fileName - Optional file name to append
- * @returns URL-friendly path string
+ * @returns URL-friendly path string with /patches prefix
  */
 export const buildUrlPath = (segments: string[], fileName?: string): string => {
-  if (segments.length === 0 && !fileName) return '/';
-  
+  if (segments.length === 0 && !fileName) return '/patches';
+
   const pathSegments = segments.map((segment) => toUrlFriendly(segment));
-  let urlPath = '/' + pathSegments.join('/');
-  
+  let urlPath = '/patches/' + pathSegments.join('/');
+
   if (fileName) {
-    urlPath += (pathSegments.length > 0 ? '/' : '') + toUrlFriendly(fileName);
+    urlPath += '/' + toUrlFriendly(fileName);
   }
-  
+
   return urlPath;
 };
