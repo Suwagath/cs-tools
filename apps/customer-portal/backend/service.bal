@@ -5621,6 +5621,15 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
             };
         }
 
+        boolean hasInvalidEmail = payload.emails.some(email => email.trim().length() == 0);
+        if hasInvalidEmail {
+            return <http:BadRequest>{
+                body: {
+                    message: "Email list contains empty or whitespace-only values."
+                }
+            };
+        }
+
         scim:AddUsersToGroupResponse|error response = scim:addUsersToExternalGroup(group, payload);
         if response is error {
             int statusCode = getStatusCode(response);
