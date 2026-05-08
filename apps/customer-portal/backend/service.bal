@@ -5594,6 +5594,79 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
         }
         return <http:Ok>{body: mapCaseActivitySummaryResponse(response)};
     }
+
+    # Add users to an external group via the SCIM operations service.
+    #
+    # + group - Display name of the external group
+    # + payload - Request payload containing user emails
+    # + return - Response with added/failed users or error response
+    resource function post groups/[string group]/users(http:RequestContext ctx, scim:AddUsersToGroupRequest payload)
+        returns scim:AddUsersToGroupResponse|http:BadRequest|http:NotFound|http:Unauthorized|http:Forbidden|
+        http:InternalServerError {
+
+        authorization:UserInfoPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: ERR_MSG_USER_INFO_HEADER_NOT_FOUND
+                }
+            };
+        }
+
+        if payload.emails.length() == 0 {
+            return <http:BadRequest>{
+                body: {
+                    message: "At least one user email must be provided."
+                }
+            };
+        }
+
+        scim:AddUsersToGroupResponse|error response = scim:addUsersToExternalGroup(group, payload);
+        if response is error {
+            int statusCode = getStatusCode(response);
+            if statusCode == http:STATUS_UNAUTHORIZED {
+                log:printWarn(string `User: ${userInfo.userId} is not authorized to add users to group: ${group}`);
+                return <http:Unauthorized>{
+                    body: {
+                        message: ERR_MSG_UNAUTHORIZED_ACCESS
+                    }
+                };
+            }
+            if statusCode == http:STATUS_FORBIDDEN {
+                log:printWarn(string `User: ${userInfo.userId} is forbidden from adding users to group: ${group}`);
+                return <http:Forbidden>{
+                    body: {
+                        message: "You do not have permission to add users to this group."
+                    }
+                };
+            }
+            if statusCode == http:STATUS_NOT_FOUND {
+                return <http:NotFound>{
+                    body: {
+                        message: string `Group '${group}' was not found.`
+                    }
+                };
+            }
+            if statusCode == http:STATUS_BAD_REQUEST {
+                log:printWarn(string `Bad request while adding users to group: ${group}. ${
+                        extractErrorMessage(response)}`);
+                return <http:BadRequest>{
+                    body: {
+                        message: extractErrorMessage(response)
+                    }
+                };
+            }
+
+            string customError = string `Failed to add users to group: ${group}.`;
+            log:printError(customError, response);
+            return <http:InternalServerError>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+        return response;
+    }
 }
 
 # WebSocket service to proxy messages between the browser and the upstream Python AI chat agent for real-time communication in chat sessions.
