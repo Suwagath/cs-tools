@@ -54,10 +54,12 @@ import {
   isNoveraOrBotSender,
 } from "@features/support/utils/support";
 import DOMPurify from "dompurify";
+import { useDarkMode } from "@utils/useDarkMode";
 import ChatMessageCard from "@case-details-activity/ChatMessageCard";
 import { useResolvedInlineImageHtml } from "@features/support/hooks/useResolvedInlineImageHtml";
 import { useGetAttachment } from "@api/useGetAttachment";
 import { useAttachmentPreview } from "@api/useAttachmentPreview";
+import { stripLightModeInlineStyles } from "@/utils/common";
 
 function commentAuthorDisplayName(comment: CaseComment): string {
   if (comment.createdByFullName?.trim()) {
@@ -81,7 +83,9 @@ export default function CommentBubble({
   userDetails,
 }: CommentBubbleProps): import("react").JSX.Element {
   const theme = useTheme();
-  const { downloadAttachment, isDownloading, downloadingId } = useGetAttachment();
+  const isDarkMode = useDarkMode();
+  const { downloadAttachment, isDownloading, downloadingId } =
+    useGetAttachment();
   const rawContent = comment.content ?? "";
   const isFullCodeWrap = hasSingleCodeWrapper(rawContent);
   const codeBlockCount = rawContent.match(/\[code\]/gi)?.length ?? 0;
@@ -97,7 +101,13 @@ export default function CommentBubble({
     comment.inlineAttachments,
   );
   const renderAsMarkdown = isNoveraOrBotSender(comment.createdBy, comment.type);
-  const sanitizedHtml = DOMPurify.sanitize(withImages, INLINE_COMMENT_HTML_PURIFY);
+  const darkModeHtml = isDarkMode
+    ? stripLightModeInlineStyles(withImages)
+    : withImages;
+  const sanitizedHtml = DOMPurify.sanitize(
+    darkModeHtml,
+    INLINE_COMMENT_HTML_PURIFY,
+  );
   const { resolvedHtml: htmlContent, isLoading: isImagesLoading } =
     useResolvedInlineImageHtml(sanitizedHtml, comment.inlineAttachments);
   const displayName = useMemo(() => {
@@ -139,7 +149,9 @@ export default function CommentBubble({
     comment.contentType ?? "",
   );
   const { data: imageDataUrl, isLoading: isImagePreviewLoading } =
-    useAttachmentPreview(isAttachmentEntry && attachmentCategory === "image" ? comment.id : null);
+    useAttachmentPreview(
+      isAttachmentEntry && attachmentCategory === "image" ? comment.id : null,
+    );
 
   const renderAttachmentIcon = () => {
     switch (attachmentCategory) {
@@ -295,40 +307,86 @@ export default function CommentBubble({
                 </span>
               </Tooltip>
             </Box>
-            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-              <Typography variant="caption" color="text.secondary" component="span">
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              flexWrap="wrap"
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="span"
+              >
                 {formatFileSize(comment.sizeBytes)}
               </Typography>
-              <Typography variant="caption" color="text.secondary" component="span">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="span"
+              >
                 •
               </Typography>
-              <Typography variant="caption" color="text.secondary" component="span">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="span"
+              >
                 Uploaded by {comment.createdBy}
               </Typography>
-              <Typography variant="caption" color="text.secondary" component="span">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="span"
+              >
                 •
               </Typography>
-              <Typography variant="caption" color="text.secondary" component="span">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="span"
+              >
                 {formatCommentDate(comment.createdOn)}
               </Typography>
             </Stack>
-            {attachmentCategory === "image" && (
-              isImagePreviewLoading ? (
-                <Skeleton variant="rectangular" width="100%" height={160} sx={{ borderRadius: 1 }} />
+            {attachmentCategory === "image" &&
+              (isImagePreviewLoading ? (
+                <Skeleton
+                  variant="rectangular"
+                  width="100%"
+                  height={160}
+                  sx={{ borderRadius: 1 }}
+                />
               ) : imageDataUrl ? (
                 <Box
                   component="img"
                   src={imageDataUrl}
                   alt={comment.fileName ?? "Image attachment"}
-                  sx={{ maxWidth: "100%", borderRadius: 1, display: "block", cursor: "pointer" }}
+                  sx={{
+                    maxWidth: "100%",
+                    borderRadius: 1,
+                    display: "block",
+                    cursor: "pointer",
+                  }}
                   onClick={() => onImageClick?.(imageDataUrl)}
                 />
-              ) : null
-            )}
+              ) : null)}
           </Paper>
         ) : isImagesLoading ? (
-          <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 0.75 }}>
-            <Skeleton variant="rectangular" width="100%" height={160} sx={{ borderRadius: 1 }} />
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.75,
+            }}
+          >
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={160}
+              sx={{ borderRadius: 1 }}
+            />
           </Box>
         ) : (
           <ChatMessageCard
