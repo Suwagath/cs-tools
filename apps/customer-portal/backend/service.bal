@@ -5600,13 +5600,23 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
     # + payload - Request payload containing group name and user emails
     # + return - Response with added/failed users or error response
     resource function post users/groups(http:RequestContext ctx, types:AddUsersToGroupRequest payload)
-        returns scim:AddUsersToGroupResponse|http:BadRequest|http:NotFound|http:InternalServerError {
+        returns scim:AddUsersToGroupResponse|http:BadRequest|http:NotFound|http:Forbidden|http:InternalServerError {
 
         authorization:UserInfoPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
             return <http:InternalServerError>{
                 body: {
                     message: ERR_MSG_USER_INFO_HEADER_NOT_FOUND
+                }
+            };
+        }
+
+        string[] userGroups = userInfo.groups ?: [];
+        if !authorization:checkRoles([authorization:authorizedRoles.scimGroupManagementRole], userGroups) {
+            log:printWarn(string `User: ${userInfo.userId} is not authorized to manage group users.`);
+            return <http:Forbidden>{
+                body: {
+                    message: "You do not have permission to manage group users."
                 }
             };
         }
