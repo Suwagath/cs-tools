@@ -346,6 +346,7 @@ export default function NoveraChatPage(): JSX.Element {
   }, [isWaitingForClassification, isAllProductsLoading, performClassification]);
   const [showRichText, setShowRichText] = useState(false);
   const [isInputDisabled, setIsInputDisabled] = useState(false);
+  const [isTypingDisabled, setIsTypingDisabled] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const inputValueRef = useRef("");
   const [resetTrigger, setResetTrigger] = useState(0);
@@ -430,6 +431,9 @@ export default function NoveraChatPage(): JSX.Element {
       }
       if (actions.some((a) => a.type === NoveraActionType.SolutionWorked)) {
         setIsInputDisabled(true);
+      }
+      if (pending?.payload?.token_warning === "session_limit_reached") {
+        setIsTypingDisabled(true);
       }
     }
   }, [setShowRichText]);
@@ -746,6 +750,7 @@ export default function NoveraChatPage(): JSX.Element {
             resetTrigger={resetTrigger}
             forceRichText={showRichText}
             disabled={isInputDisabled}
+            typingDisabled={isTypingDisabled}
           />
         </Paper>
       </Box>
