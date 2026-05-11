@@ -5599,7 +5599,7 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
     #
     # + payload - Request payload containing group name and user emails
     # + return - Response with added/failed users or error response
-    resource function post users/groups(http:RequestContext ctx, scim:AddUsersToGroupRequest payload)
+    resource function post users/groups(http:RequestContext ctx, types:AddUsersToGroupRequest payload)
         returns scim:AddUsersToGroupResponse|http:BadRequest|http:NotFound|http:InternalServerError {
 
         authorization:UserInfoPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
@@ -5636,21 +5636,21 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
             };
         }
 
-        string group = payload.group;
-        scim:AddUsersToGroupPayload scimPayload = {emails: payload.emails};
-        scim:AddUsersToGroupResponse|error response = scim:addUsersToExternalGroup(group, scimPayload);
+        scim:AddUsersToGroupResponse|error response = scim:addUsersToExternalGroup(payload.group,
+                {emails: payload.emails});
         if response is error {
             int statusCode = getStatusCode(response);
             if statusCode == http:STATUS_NOT_FOUND {
-                log:printWarn(string `Group '${group}' was not found.`);
+                string notFoundMsg = string `Group '${payload.group}' is not found.`;
+                log:printWarn(notFoundMsg);
                 return <http:NotFound>{
                     body: {
-                        message: string `Group '${group}' was not found.`
+                        message: notFoundMsg
                     }
                 };
             }
             if statusCode == http:STATUS_BAD_REQUEST {
-                log:printWarn(string `Bad request while adding users to group: ${group}. ${
+                log:printWarn(string `Invalid request while adding users to the provided group. ${
                         extractErrorMessage(response)}`);
                 return <http:BadRequest>{
                     body: {
@@ -5659,7 +5659,7 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
                 };
             }
 
-            string customError = string `Failed to add users to group: ${group}.`;
+            string customError = "Failed to add users to group.";
             log:printError(customError, response);
             return <http:InternalServerError>{
                 body: {
