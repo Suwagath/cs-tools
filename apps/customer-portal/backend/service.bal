@@ -5611,6 +5611,14 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
             };
         }
 
+        if payload.group.trim().length() == 0 {
+            return <http:BadRequest>{
+                body: {
+                    message: "Group name must be provided."
+                }
+            };
+        }
+
         if payload.emails.length() == 0 {
             return <http:BadRequest>{
                 body: {
