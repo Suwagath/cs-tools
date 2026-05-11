@@ -6009,11 +6009,14 @@ components:
         group:
           type: string
           description: Display name of the group
+          minLength: 1
+          pattern: "\\S+"
         emails:
           type: array
           description: Array of user email addresses to add to the group
           items:
             type: string
+            format: email
           minItems: 1
       additionalProperties: false
       description: Request payload for adding users to a group.
