@@ -5613,7 +5613,7 @@ service http:InterceptableService / on new http:Listener(9090, listenerConf) {
 
         string[] userGroups = userInfo.groups ?: [];
         if !authorization:checkRoles([authorization:authorizedRoles.scimGroupManagementRole], userGroups) {
-            log:printWarn(string `User: ${userInfo.userId} is not authorized to manage group users.`);
+            log:printWarn(string `User: ${userInfo.userId} is not authorized invoke group management endpoint.`);
             return <http:Forbidden>{
                 body: {
                     message: "You do not have permission to manage group users."
