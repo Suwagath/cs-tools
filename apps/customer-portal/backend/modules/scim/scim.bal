@@ -47,7 +47,7 @@ public isolated function updateUser(UserUpdatePayload payload, string email, str
     string organization = isWso2Email(email) ? ORGANIZATION_INTERNAL : ORGANIZATION_EXTERNAL;
     return scimOperationsClient->/organizations/[organization]/users/[uuid].patch(payload);
 }
-x
+
 # Adds users to an external group via the SCIM operations service.
 #
 # + group - The display name of the external group
@@ -55,5 +55,6 @@ x
 # + return - The response with added/failed users, or an error if the operation fails
 public isolated function addUsersToExternalGroup(string group, AddUsersToGroupPayload payload)
         returns AddUsersToGroupResponse|error {
+
     return scimOperationsClient->/organizations/[ORGANIZATION_EXTERNAL]/groups/[group]/users.post(payload);
 }
