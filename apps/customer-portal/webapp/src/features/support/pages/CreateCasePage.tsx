@@ -247,6 +247,22 @@ export default function CreateCasePage(): JSX.Element {
 
   const hasInitializedRef = useRef(false);
   const hasClassificationAppliedRef = useRef(false);
+  const skipDescriptionOnChangeRef = useRef(false);
+  const classificationDescriptionRef = useRef<string>("");
+  const [isDeploymentManuallySet, setIsDeploymentManuallySet] = useState(false);
+  const [isProductManuallySet, setIsProductManuallySet] = useState(false);
+  const [isIssueTypeFromClassification, setIsIssueTypeFromClassification] =
+    useState(false);
+  const [isSeverityFromClassification, setIsSeverityFromClassification] =
+    useState(false);
+  const [classificationDeploymentLabel, setClassificationDeploymentLabel] =
+    useState("");
+  const [isDeploymentFromClassification, setIsDeploymentFromClassification] =
+    useState(false);
+  const [isTitleFromClassification, setIsTitleFromClassification] =
+    useState(false);
+  const [isDescriptionFromClassification, setIsDescriptionFromClassification] =
+    useState(false);
 
   const skipChatMode = skipChat;
   const noAiMode = !!relatedCase || skipChatMode;
@@ -389,6 +405,10 @@ export default function CreateCasePage(): JSX.Element {
   const handleDeploymentChange = useCallback((value: string) => {
     setDeployment(value);
     setProduct("");
+    setIsDeploymentManuallySet(true);
+    setIsDeploymentFromClassification(false);
+    setClassificationDeploymentLabel("");
+    setIsProductManuallySet(true);
   }, []);
 
   // For Cloud Support / Cloud Evaluation Support: auto-pick the first primary
@@ -405,6 +425,35 @@ export default function CreateCasePage(): JSX.Element {
 
   const handleProductChange = useCallback((value: string) => {
     setProduct(value);
+    setIsProductManuallySet(true);
+  }, []);
+
+  const handleIssueTypeChange = useCallback((value: string) => {
+    setIssueType(value);
+    setIsIssueTypeFromClassification(false);
+  }, []);
+
+  const handleSeverityChange = useCallback((value: string) => {
+    setSeverity(value);
+    setIsSeverityFromClassification(false);
+  }, []);
+
+  const handleTitleChange = useCallback((value: string) => {
+    setTitle(value);
+    setIsTitleFromClassification(false);
+  }, []);
+
+  const handleDescriptionChange = useCallback((value: string) => {
+    if (skipDescriptionOnChangeRef.current) {
+      skipDescriptionOnChangeRef.current = false;
+      classificationDescriptionRef.current = value;
+      setDescription(value);
+      return;
+    }
+    setDescription(value);
+    if (value !== classificationDescriptionRef.current) {
+      setIsDescriptionFromClassification(false);
+    }
   }, []);
 
   // Auto-fill title for security reports when deployment and product are selected
@@ -550,20 +599,25 @@ export default function CreateCasePage(): JSX.Element {
     if (noAiMode) return;
     if (!classificationResponse?.caseInfo) return;
     const info = classificationResponse.caseInfo;
-    if (info.shortDescription?.trim()) setTitle(info.shortDescription);
+    if (info.shortDescription?.trim()) {
+      setTitle(info.shortDescription);
+      setIsTitleFromClassification(true);
+    }
     if (info.description?.trim()) {
       const text = info.description.trim();
       const isLikelyHtml =
         /<[a-zA-Z][^>]*>[\s\S]*<\/[a-zA-Z][^>]*>|<[a-zA-Z][^>]*\/>/.test(text);
       const html = isLikelyHtml ? text : `<p>${escapeHtml(text)}</p>`;
+      skipDescriptionOnChangeRef.current = true;
       setDescription(html);
+      setIsDescriptionFromClassification(true);
     }
   }, [classificationResponse, noAiMode]);
 
   useEffect(() => {
     if (noAiMode) return;
     if (hasClassificationAppliedRef.current || !classificationResponse) return;
-    if (isFiltersLoading || isDeploymentsLoading) return;
+    if (isFiltersLoading) return;
 
     if (!severityLevelsList.length) return;
 
@@ -575,26 +629,17 @@ export default function CreateCasePage(): JSX.Element {
 
     hasClassificationAppliedRef.current = true;
 
-    setDeployment((prev) => {
-      if (!deploymentLabel) return prev;
-      const matched =
-        getDeploymentDisplayLabelForEnvironment(
-          deploymentLabel,
-          projectDeployments,
-        ) ??
-        findMatchingDeploymentLabel(deploymentLabel, baseDeploymentOptions);
-      return matched ?? prev;
-    });
+    if (deploymentLabel) setClassificationDeploymentLabel(deploymentLabel);
     if (productLabel) setClassificationProductLabel(productLabel);
     // Product is auto-selected in the sync effect when products for the matched deployment load
-    setIssueType((prev) =>
+    const issueTypeMatched = !!(
       issueTypeLabel &&
       issueTypesList.some(
         (t) => t.label === issueTypeLabel || t.id === issueTypeLabel,
       )
-        ? issueTypeLabel
-        : prev,
     );
+    setIssueType((prev) => (issueTypeMatched ? issueTypeLabel! : prev));
+    if (issueTypeMatched) setIsIssueTypeFromClassification(true);
 
     const severityMapping: Record<string, string> = {
       [CaseSeverityLevel.S0]: CaseSeverity.CATASTROPHIC,
@@ -602,6 +647,7 @@ export default function CreateCasePage(): JSX.Element {
       [CaseSeverityLevel.S2]: CaseSeverity.HIGH,
       [CaseSeverityLevel.S3]: CaseSeverity.MEDIUM,
       [CaseSeverityLevel.S4]: CaseSeverity.LOW,
+      S4: CaseSeverity.LOW,
     };
 
     const mappedLabel = severityMapping[severityLabel ?? ""] ?? severityLabel;
@@ -613,15 +659,76 @@ export default function CreateCasePage(): JSX.Element {
         s.label === mappedLabel,
     );
     setSeverity((prev) => (matchedSeverity ? matchedSeverity.id : prev));
+    if (matchedSeverity) setIsSeverityFromClassification(true);
   }, [
     classificationResponse,
     isFiltersLoading,
     noAiMode,
-    isDeploymentsLoading,
-    baseDeploymentOptions,
     issueTypesList,
-    projectDeployments,
     severityLevelsList,
+  ]);
+
+  // Reactively match deployment from classification as pages load.
+  useEffect(() => {
+    if (
+      noAiMode ||
+      !classificationDeploymentLabel?.trim() ||
+      isDeploymentManuallySet
+    )
+      return;
+    if (isDeploymentFromClassification) return;
+    const matched =
+      getDeploymentDisplayLabelForEnvironment(
+        classificationDeploymentLabel,
+        projectDeployments,
+      ) ??
+      findMatchingDeploymentLabel(
+        classificationDeploymentLabel,
+        baseDeploymentOptions,
+      );
+    if (matched) {
+      setDeployment(matched);
+      setIsDeploymentFromClassification(true);
+    }
+  }, [
+    classificationDeploymentLabel,
+    projectDeployments,
+    baseDeploymentOptions,
+    noAiMode,
+    isDeploymentManuallySet,
+    isDeploymentFromClassification,
+  ]);
+
+  // Auto-fetch more deployment pages when classification suggests a deployment not yet loaded.
+  useEffect(() => {
+    if (
+      noAiMode ||
+      !classificationDeploymentLabel?.trim() ||
+      isDeploymentManuallySet
+    )
+      return;
+    if (isDeploymentFromClassification) return;
+    if (deploymentsQuery.isFetchingNextPage || !deploymentsQuery.hasNextPage)
+      return;
+    const alreadyFound =
+      getDeploymentDisplayLabelForEnvironment(
+        classificationDeploymentLabel,
+        projectDeployments,
+      ) ??
+      findMatchingDeploymentLabel(
+        classificationDeploymentLabel,
+        baseDeploymentOptions,
+      );
+    if (alreadyFound) return;
+    void deploymentsQuery.fetchNextPage();
+  }, [
+    noAiMode,
+    classificationDeploymentLabel,
+    isDeploymentManuallySet,
+    isDeploymentFromClassification,
+    projectDeployments,
+    baseDeploymentOptions,
+    deploymentsQuery,
   ]);
 
   useEffect(() => {
@@ -672,6 +779,28 @@ export default function CreateCasePage(): JSX.Element {
     relatedCase,
     classificationProductLabel,
     selectedDeploymentId,
+  ]);
+
+  // Auto-fetch more product pages when classification suggests a product not yet loaded.
+  useEffect(() => {
+    if (!classificationProductLabel?.trim()) return;
+    if (!selectedDeploymentId) return;
+    if (
+      deploymentProductsQuery.isFetchingNextPage ||
+      !deploymentProductsQuery.hasNextPage
+    )
+      return;
+    const alreadyFound = findMatchingProductId(
+      classificationProductLabel,
+      sortedBaseProductOptions,
+    );
+    if (alreadyFound) return;
+    void deploymentProductsQuery.fetchNextPage();
+  }, [
+    classificationProductLabel,
+    sortedBaseProductOptions,
+    selectedDeploymentId,
+    deploymentProductsQuery,
   ]);
 
   const handleBack = () => {
@@ -908,12 +1037,32 @@ export default function CreateCasePage(): JSX.Element {
   }, [classificationProductLabel, sortedBaseProductOptions]);
 
   const isProductAutoDetected =
-    !noAiMode && !!classificationProductLabel?.trim() && !!product?.trim();
+    !noAiMode &&
+    !!classificationProductLabel?.trim() &&
+    !!product?.trim() &&
+    !isProductManuallySet;
 
   const isDeploymentAutoDetected =
+    !noAiMode && isDeploymentFromClassification && !isDeploymentManuallySet;
+
+  const isIssueTypeAutoDetected = !noAiMode && isIssueTypeFromClassification;
+  const isSeverityAutoDetected = !noAiMode && isSeverityFromClassification;
+
+  const isDeploymentClassificationPending =
     !noAiMode &&
-    !!classificationResponse?.caseInfo?.environment?.trim() &&
-    !!deployment?.trim();
+    !!classificationDeploymentLabel?.trim() &&
+    !deployment?.trim() &&
+    !isDeploymentManuallySet &&
+    (deploymentsQuery.isLoading ||
+      deploymentsQuery.isFetchingNextPage ||
+      !!deploymentsQuery.hasNextPage);
+
+  const isProductClassificationPending =
+    !noAiMode &&
+    !!classificationProductLabel?.trim() &&
+    !product?.trim() &&
+    !!selectedDeploymentId &&
+    (deploymentProductsLoading || !!deploymentProductsQuery.hasNextPage);
 
   const sectionMetadata = {
     deploymentTypes: baseDeploymentOptions,
@@ -946,10 +1095,15 @@ export default function CreateCasePage(): JSX.Element {
             isProductAutoDetected={isProductAutoDetected}
             isDeploymentAutoDetected={isDeploymentAutoDetected}
             metadata={sectionMetadata}
-            isDeploymentLoading={isProjectLoading || isDeploymentsLoading}
+            isDeploymentLoading={
+              isProjectLoading ||
+              isDeploymentsLoading ||
+              isDeploymentClassificationPending
+            }
             isProductDropdownDisabled={isProductDropdownDisabled}
             isProductLoading={
-              !!selectedDeploymentId && deploymentProductsLoading
+              (!!selectedDeploymentId && deploymentProductsLoading) ||
+              isProductClassificationPending
             }
             isRelatedCaseMode={noAiMode}
             extraProductOptions={extraProductOptions}
@@ -980,13 +1134,17 @@ export default function CreateCasePage(): JSX.Element {
 
           <CaseDetailsSection
             title={title}
-            setTitle={setTitle}
+            setTitle={handleTitleChange}
             description={description}
-            setDescription={setDescription}
+            setDescription={handleDescriptionChange}
             issueType={issueType}
-            setIssueType={setIssueType}
+            setIssueType={handleIssueTypeChange}
             severity={severity}
-            setSeverity={setSeverity}
+            setSeverity={handleSeverityChange}
+            isIssueTypeAutoDetected={isIssueTypeAutoDetected}
+            isSeverityAutoDetected={isSeverityAutoDetected}
+            isTitleFromChat={isTitleFromClassification}
+            isDescriptionFromConversation={isDescriptionFromClassification}
             metadata={undefined}
             filters={filters}
             isLoading={isFiltersLoading}

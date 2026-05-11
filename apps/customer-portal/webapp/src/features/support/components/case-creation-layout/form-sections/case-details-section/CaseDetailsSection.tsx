@@ -61,6 +61,10 @@ export function CaseDetailsSection({
   isSecurityReport = false,
   excludeS0 = false,
   isSeverityDisabled = false,
+  isIssueTypeAutoDetected = false,
+  isSeverityAutoDetected = false,
+  isTitleFromChat = false,
+  isDescriptionFromConversation = false,
 }: CaseDetailsSectionProps): JSX.Element {
   const titleReadOnly = isTitleDisabled;
   const titleLength = title.trim().length;
@@ -163,7 +167,7 @@ export function CaseDetailsSection({
                 </Box>
               )}
             </Typography>
-            {!isRelatedCaseMode && (
+            {!isRelatedCaseMode && isTitleFromChat && (
               <Chip
                 label="Generated from chat"
                 size="small"
@@ -212,7 +216,7 @@ export function CaseDetailsSection({
                 *
               </Box>
             </Typography>
-            {!isRelatedCaseMode && (
+            {!isRelatedCaseMode && isDescriptionFromConversation && (
               <Chip
                 label="From conversation"
                 size="small"
@@ -391,7 +395,7 @@ export function CaseDetailsSection({
                     *
                   </Box>
                 </Typography>
-                {!isRelatedCaseMode && (
+                {!isRelatedCaseMode && isIssueTypeAutoDetected && (
                   <Chip
                     label="AI classified"
                     size="small"
@@ -446,7 +450,7 @@ export function CaseDetailsSection({
                     *
                   </Box>
                 </Typography>
-                {!isRelatedCaseMode && (
+                {!isRelatedCaseMode && isSeverityAutoDetected && (
                   <Chip
                     label="AI assessed"
                     size="small"
