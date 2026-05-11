@@ -43,9 +43,11 @@ export default function ChatInput({
   isSending = false,
   isCreateCaseLoading = false,
   disabled = false,
+  typingDisabled = false,
 }: ChatInputProps): JSX.Element | null {
   const isTooLong = inputValue.length > CHAT_MAX_CHARS;
-  const isSendDisabled = !inputValue.trim() || isSending || isTooLong;
+  const isInputBlocked = isSending || typingDisabled;
+  const isSendDisabled = !inputValue.trim() || isInputBlocked || isTooLong;
 
   if (disabled) {
     return null;
@@ -106,7 +108,7 @@ export default function ChatInput({
               fullWidth
               variant="outlined"
               size="small"
-              disabled={isSending}
+              disabled={isInputBlocked}
               error={isTooLong}
               sx={{
                 "& textarea": {
