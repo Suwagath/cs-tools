@@ -97,6 +97,10 @@ export type CaseDetailsSectionProps = {
   isSecurityReport?: boolean;
   excludeS0?: boolean;
   isSeverityDisabled?: boolean;
+  isIssueTypeAutoDetected?: boolean;
+  isSeverityAutoDetected?: boolean;
+  isTitleFromChat?: boolean;
+  isDescriptionFromConversation?: boolean;
 };
 
 export type ChatMessageCardProps = {
