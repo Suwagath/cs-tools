@@ -14,8 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ballerina/url;
-
 # Import deployment usage data from a zip file.
 #
 # + email - Email address of the importing user
@@ -24,7 +22,10 @@ import ballerina/url;
 public isolated function importDeploymentUsage(string email, byte[] zipFile)
         returns DeploymentUsageImportResponse|error {
 
-    string encodedEmail = check url:encode(email, CHARSET_UTF_8);
-    string path = string `/deployment-usage-import?email=${encodedEmail}`;
-    return productConsumptionTrackingClient->post(path, zipFile, mediaType = CONTENT_TYPE_APPLICATION_ZIP);
+    http:Request req = new;
+    req.setBinaryPayload(zipFile);
+    req.setContentType(CONTENT_TYPE_APPLICATION_ZIP);
+
+    return productConsumptionTrackingClient->/deployment\-usage\-import.post(req, email);
+
 }

@@ -15,4 +15,3 @@
 // under the License.
 
 const CONTENT_TYPE_APPLICATION_ZIP = "application/zip";
-const CHARSET_UTF_8 = "UTF-8";
