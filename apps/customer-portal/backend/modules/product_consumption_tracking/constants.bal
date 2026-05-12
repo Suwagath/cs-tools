@@ -14,5 +14,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const string CONTENT_TYPE_APPLICATION_ZIP = "application/zip";
-const string CHARSET_UTF_8 = "UTF-8";
+const CONTENT_TYPE_APPLICATION_ZIP = "application/zip";
+const CHARSET_UTF_8 = "UTF-8";
