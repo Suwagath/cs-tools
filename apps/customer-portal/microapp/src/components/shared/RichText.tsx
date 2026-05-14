@@ -98,11 +98,13 @@ export const RichText = (props: React.ComponentProps<typeof RichTextBase>) => {
         const id = originalSrc.split("/").pop()?.split(".")[0];
         if (!id) return;
 
-        const { content: data } = await queryClient.fetchQuery(cases.attachment(id));
-        if (!data) return;
-
-        image.src = data;
-        image.style.visibility = "visible";
+        try {
+          const { content: data } = await queryClient.fetchQuery(cases.attachment(id));
+          if (!data) return;
+          image.src = data;
+        } finally {
+          image.style.visibility = "visible";
+        }
       }),
     );
   }, [props.dangerouslySetInnerHTML]);
