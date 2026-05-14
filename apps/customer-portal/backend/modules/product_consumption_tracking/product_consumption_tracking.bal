@@ -24,7 +24,7 @@ public isolated function importDeploymentUsage(string email, byte[] zipFile)
 
     http:Request req = new;
     req.setBinaryPayload(zipFile);
-    req.setContentType(CONTENT_TYPE_APPLICATION_ZIP);
+    check req.setContentType(CONTENT_TYPE_APPLICATION_ZIP);
 
     return productConsumptionTrackingClient->/deployment\-usage.post(req, email);
 }
