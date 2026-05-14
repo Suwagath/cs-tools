@@ -22,6 +22,8 @@ public type ClientCredentialsOauth2Config record {|
     string clientId;
     # Client Secret
     string clientSecret;
+    # Scopes
+    string[] scopes = [];
 |};
 
 # Deployment usage import response.
