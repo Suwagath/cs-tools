@@ -36,7 +36,7 @@ export default function MeProvider({ children }: { children: React.ReactNode }) 
 
   const [initialized, setInitialized] = useState(false);
 
-  const { data: lastVisitedProject } = useQuery({
+  const { data: lastVisitedProject, isLoading: isLastVisitedProjectLoading } = useQuery({
     ...projects.get(lastVisitedProjectId!),
     enabled: !!lastVisitedProjectId,
   });
@@ -57,7 +57,13 @@ export default function MeProvider({ children }: { children: React.ReactNode }) 
     }
   }, [initialized, lastVisitedProject, setProjectId, navigate]);
 
-  if (meLoading || projectsLoading || (lastVisitedProject && isFeaturesError) || isFeaturesLoading)
+  if (
+    meLoading ||
+    projectsLoading ||
+    isLastVisitedProjectLoading ||
+    isFeaturesLoading ||
+    (lastVisitedProject && isFeaturesError)
+  )
     return <LoadingFallback />;
 
   if (axios.isAxiosError(meError) || axios.isAxiosError(projectsError)) return <AuthorizationFallback />;
