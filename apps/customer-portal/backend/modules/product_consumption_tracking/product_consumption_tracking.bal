@@ -20,7 +20,7 @@
 # + zipFile - Zip file content as bytes
 # + return - Deployment usage import response or error
 public isolated function importDeploymentUsage(string email, byte[] zipFile)
-        returns DeploymentUsageImportResponse|error {
+    returns DeploymentUsageImportResponse|error {
 
     http:Request req = new;
     req.setBinaryPayload(zipFile);
