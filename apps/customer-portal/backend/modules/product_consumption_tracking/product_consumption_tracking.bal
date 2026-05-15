@@ -13,7 +13,6 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-import ballerina/http;
 
 # Import deployment usage data from a zip file.
 #
@@ -23,9 +22,11 @@ import ballerina/http;
 public isolated function importDeploymentUsage(string email, byte[] zipFile)
     returns DeploymentUsageImportResponse|error {
 
-    http:Request req = new;
-    req.setBinaryPayload(zipFile);
-    check req.setContentType(CONTENT_TYPE_APPLICATION_ZIP);
+    ImportRequest payload = {
+        email: email,
+        zip: zipFile.toBase64()
+    };
 
-    return productConsumptionTrackingClient->/deployment\-usage.post(req, email = email);
+    return productConsumptionTrackingClient->/deployment\-usage.post(payload);
+
 }

@@ -34,3 +34,12 @@ public type DeploymentUsageImportResponse record {|
     json result?;
     json...;
 |};
+
+# Import Request payload.
+#
+# + email - email address of the user performing the import operation  
+# + zip - zip file content as base64 string
+public type ImportRequest record {
+    string email;
+    string zip;
+};
