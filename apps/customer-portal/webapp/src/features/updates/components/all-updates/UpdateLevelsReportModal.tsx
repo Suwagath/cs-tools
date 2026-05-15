@@ -28,7 +28,6 @@ import {
 } from "@wso2/oxygen-ui";
 import { Printer, X } from "@wso2/oxygen-ui-icons-react";
 import { useCallback, useState, type JSX } from "react";
-import DOMPurify from "dompurify";
 import {
   generateUpdateLevelsReportPdf,
   isSafeHttpUrl,
@@ -36,56 +35,7 @@ import {
 } from "@features/updates/utils/updateLevelsReportPdf";
 import type { UpdateLevelsReportModalProps, UpdateDescriptionLevel } from "@features/updates/types/updates";
 import { useDarkMode } from "@utils/useDarkMode";
-import { stripLightModeInlineStyles } from "@utils/common";
-
-// Matches actual HTML formatting tags — not XML/config tag-like strings e.g. <Product_Home>.
-const HTML_FORMAT_RE = /<\/?(p|span|div|ul|ol|li|strong|em|b|i|br|h[1-6]|a[\s>]|table|tr|td|th|code|pre|blockquote)\b/i;
-
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, " ");
-}
-
-const HTML_CONTENT_SX = {
-  fontSize: "0.875rem",
-  lineHeight: 1.7,
-  color: "text.secondary",
-  "& p": { margin: "0 0 0.4em 0" },
-  "& p:last-child": { marginBottom: 0 },
-  "& a": { color: "primary.main", textDecoration: "underline" },
-  "& ul, & ol": { mt: 0, mb: 0.5, pl: 2.5 },
-  "& li": { mb: 0.25 },
-  "& strong, & b": { fontWeight: 600, color: "text.primary" },
-};
-
-function HtmlOrText({ content, isDark }: { content: string; isDark: boolean }): JSX.Element {
-  if (HTML_FORMAT_RE.test(content)) {
-    // Real HTML markup — sanitize and render.
-    const stripped = isDark ? stripLightModeInlineStyles(content) : content;
-    return (
-      <Box
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(stripped) }}
-        sx={HTML_CONTENT_SX}
-      />
-    );
-  }
-  // Plain text that may contain HTML entities (e.g. &lt;tag&gt;) — decode and
-  // render with newlines preserved so angle-bracket content shows correctly.
-  const decoded = decodeEntities(content);
-  const safeHtml = decoded
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\n/g, "<br>");
-  return (
-    <Box dangerouslySetInnerHTML={{ __html: safeHtml }} sx={HTML_CONTENT_SX} />
-  );
-}
+import { HtmlOrText } from "@features/updates/components/HtmlOrText";
 
 function isInstructionsNonEmpty(text: string | null | undefined): boolean {
   if (!text) return false;
