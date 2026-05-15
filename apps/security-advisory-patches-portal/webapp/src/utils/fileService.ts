@@ -16,46 +16,15 @@
 
 import { APIService } from './apiService';
 import { AppConfig } from '@src/config/config';
-import { FileItem } from '@src/types/types';
 
-/**
- * List security advisories from Azure File Share
- * @param path - Optional folder path (can be undefined to fetch root)
- * @returns Promise with array of file items
- */
-export const listSecurityAdvisories = async (
-  path?: string
-): Promise<FileItem[]> => {
-  const response = await APIService.getInstance().get(
-    AppConfig.serviceUrls.listSecurityAdvisories,
-    {
-      params: path !== undefined ? { path } : {},
-    }
-  );
-  return response.data;
-};
-
-/**
- * Download a security advisory file from Azure File Share
- * @param path - Path to the file in file share
- * @returns Promise with binary file data (Blob is a standard JavaScript type for binary data)
- */
 export const downloadSecurityAdvisory = async (path: string): Promise<Blob> => {
-  const response = await APIService.getInstance().get(
-    AppConfig.serviceUrls.downloadSecurityAdvisory,
-    {
-      params: { path },
-      responseType: 'blob', // axios config for binary data download
-    }
-  );
+  const response = await APIService.getInstance().get(AppConfig.serviceUrls.downloadSecurityAdvisory, {
+    params: { path },
+    responseType: 'blob',
+  });
   return response.data;
 };
 
-/**
- * Helper to download a file to the user's device
- * @param fileData - The binary file data to download (Blob is a standard JavaScript type)
- * @param filename - Name for the downloaded file
- */
 export const downloadFile = (fileData: Blob, filename: string) => {
   const url = window.URL.createObjectURL(fileData);
   const link = document.createElement('a');
@@ -63,29 +32,18 @@ export const downloadFile = (fileData: Blob, filename: string) => {
   link.download = filename;
   document.body.appendChild(link);
   link.click();
-  
-  // Delay cleanup to ensure download has started
+
   setTimeout(() => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }, 100);
 };
 
-/**
- * Helper to extract filename from file path
- * @param path - Full file path
- * @returns Filename
- */
 export const getFileName = (path: string): string => {
   const parts = path.split('/');
   return parts[parts.length - 1] || path;
 };
 
-/**
- * Helper to get file extension
- * @param filename - File name
- * @returns Extension (lowercase)
- */
 export const getFileExtension = (filename: string): string => {
   const parts = filename.split('.');
   return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';

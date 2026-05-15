@@ -15,12 +15,14 @@
 // under the License.
 
 import React, { useLayoutEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { useAppAuth } from '@src/context/AuthContext';
 import { useAppSelector } from '@src/slices/store';
-import FileExplorerPage from '@src/view/FileExplorer/FileExplorerPage';
-import { SEC_ADV_REDIRECT_PATH_KEY } from '@src/constants/constants';
+import PatchesPdfPage from '@src/view/PatchesPdf/PatchesPdfPage';
+import RootLandingPage from '@src/view/RootLanding/RootLandingPage';
+import NotFoundPage from '@src/view/NotFound/NotFoundPage';
+import { SEC_ADV_REDIRECT_PATH_KEY, pathnameEndsWithPdf } from '@src/constants/constants';
 
 const AppHandler: React.FC = () => {
   const { appSignOut } = useAppAuth();
@@ -28,33 +30,41 @@ const AppHandler: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // After OAuth, the browser is typically sent to signInRedirectURL (often "/" only). Restore the
-  // deep link we stored in AuthContext right before signIn(). useLayoutEffect avoids a flash of "/".
   useLayoutEffect(() => {
     if (!isAuthenticated || isLoading) {
       return;
     }
     try {
       const redirectPath = sessionStorage.getItem(SEC_ADV_REDIRECT_PATH_KEY);
-      if (!redirectPath?.startsWith('/patches')) {
+      const redirectPathOnly = redirectPath?.split('?')[0] ?? '';
+      if (!pathnameEndsWithPdf(redirectPathOnly)) {
         return;
       }
-      // IdP often returns to "/" or exactly "/patches" (configured sign-in redirect)
       const pathOnly = location.pathname;
-      const onOAuthLanding =
-        pathOnly === '/' ||
-        pathOnly === '' ||
-        pathOnly === '/patches';
+      const onOAuthLanding = pathOnly === '/' || pathOnly === '';
       if (onOAuthLanding) {
-        sessionStorage.removeItem(SEC_ADV_REDIRECT_PATH_KEY);
-        navigate(redirectPath, { replace: true });
+        navigate(redirectPath!, { replace: true });
       }
     } catch (e) {
       console.warn('Failed to restore redirect path:', e);
     }
   }, [isAuthenticated, isLoading, location.pathname, navigate]);
 
-  // Show loader while loading OR not authenticated (redirecting to Asgardeo)
+  useLayoutEffect(() => {
+    try {
+      const redirectPath = sessionStorage.getItem(SEC_ADV_REDIRECT_PATH_KEY);
+      if (!redirectPath) {
+        return;
+      }
+      const current = location.pathname + location.search;
+      if (current === redirectPath) {
+        sessionStorage.removeItem(SEC_ADV_REDIRECT_PATH_KEY);
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.pathname, location.search]);
+
   if (isLoading || !isAuthenticated) {
     return (
       <Box
@@ -64,7 +74,7 @@ const AppHandler: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          bgcolor: '#f5f5f5', // Greyish white background
+          bgcolor: '#f5f5f5',
           gap: 3,
         }}
       >
@@ -85,15 +95,52 @@ const AppHandler: React.FC = () => {
     );
   }
 
-  return (
-    <Routes>
-      <Route
-        path="*"
-        element={<FileExplorerPage username={user?.username} onLogout={appSignOut} />}
-      />
-    </Routes>
-  );
+  const pathOnly = location.pathname;
+  const oauthPdfResume =
+    typeof window !== 'undefined' &&
+    (pathOnly === '/' || pathOnly === '') &&
+    !!sessionStorage.getItem(SEC_ADV_REDIRECT_PATH_KEY) &&
+    pathnameEndsWithPdf(sessionStorage.getItem(SEC_ADV_REDIRECT_PATH_KEY)!.split('?')[0]);
+
+  if (oauthPdfResume) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100vh',
+          bgcolor: '#f5f5f5',
+          gap: 3,
+        }}
+      >
+        <CircularProgress size={60} />
+        <Box sx={{ textAlign: 'center' }}>
+          <Box
+            component="span"
+            sx={{
+              fontSize: '1.1rem',
+              color: 'text.secondary',
+              fontWeight: 500,
+            }}
+          >
+            Opening your link…
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (pathOnly === '/' || pathOnly === '') {
+    return <RootLandingPage username={user?.username} onLogout={appSignOut} />;
+  }
+
+  if (pathnameEndsWithPdf(pathOnly)) {
+    return <PatchesPdfPage username={user?.username} onLogout={appSignOut} />;
+  }
+
+  return <NotFoundPage username={user?.username} onLogout={appSignOut} />;
 };
 
 export default AppHandler;
-

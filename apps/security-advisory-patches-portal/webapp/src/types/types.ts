@@ -14,23 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// File Item representing a file or folder in Azure File Share
-export interface FileItem {
-  name: string;
-  isFolder: boolean;
-  size?: number;
-  contentType?: string;
-}
-
-// Application State enum
-export enum State {
-  failed = 'failed',
-  success = 'success',
-  loading = 'loading',
-  idle = 'idle',
-}
-
-// User Info
 export interface UserInfo {
   username: string;
   email: string;

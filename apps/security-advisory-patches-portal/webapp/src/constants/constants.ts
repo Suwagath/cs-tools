@@ -14,38 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-// Error Messages
-export const ERROR_MESSAGES = {
-  GENERIC_ERROR: 'An error occurred. Please try again.',
-  NETWORK_ERROR: 'Network error. Please check your connection.',
-  SERVER_ERROR: 'Server error. Please try again later.',
-  INVALID_REQUEST: 'Invalid path format.',
-};
-
-// Success Messages
-export const SUCCESS_MESSAGES = {
-  FILE_DOWNLOADED: 'File downloaded successfully.',
-};
-
-// File Extensions and their display info
-export const FILE_TYPE_INFO: Record<string, { color: string; label: string }> = {
-  pdf: { color: '#FF0000', label: 'PDF Document' },
-  doc: { color: '#2196f3', label: 'Word Document' },
-  docx: { color: '#2196f3', label: 'Word Document' },
-  xls: { color: '#4caf50', label: 'Excel Spreadsheet' },
-  xlsx: { color: '#4caf50', label: 'Excel Spreadsheet' },
-  txt: { color: '#9e9e9e', label: 'Text File' },
-  md: { color: '#000000', label: 'Markdown File' },
-  zip: { color: '#FFA500', label: 'ZIP Archive' },
-  default: { color: '#9e9e9e', label: 'File' },
-};
-
-// --- Session storage (per-tab; deep link + sign-in gate) ---
-
-/** Return URL after OAuth when sign-in started from a /patches/... deep link. */
+/** Return URL after OAuth when sign-in started from a `.pdf` document link. */
 export const SEC_ADV_REDIRECT_PATH_KEY = 'sec_adv_redirect_path';
 
-/**
- * Whether this tab already triggered signIn (avoids localStorage so other tabs do not skip sign-in).
- */
 export const SEC_ADV_SIGN_IN_INIT_KEY = 'sec_adv_sign_in_initiated';
+
+/** True when the URL path ends with `.pdf` (last path segment; query string ignored). */
+export function pathnameEndsWithPdf(pathname: string): boolean {
+  const trimmed = pathname.replace(/\/+$/, '');
+  const lastSegment = trimmed.split('/').pop() ?? '';
+  return /\.pdf$/i.test(lastSegment);
+}

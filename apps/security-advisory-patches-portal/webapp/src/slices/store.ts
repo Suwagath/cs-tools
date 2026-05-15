@@ -17,20 +17,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import authReducer from './authSlice/auth';
-import fileReducer from './fileSlice/file';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    file: fileReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        // Ignore these action types
-        ignoredActions: ['file/downloadFile/fulfilled'],
-      },
-    }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -26,7 +26,9 @@ import ballerina/log;
     cors: {
         allowOrigins: [
             "http://localhost:3000",
-            "http://127.0.0.1:3000"
+            "http://127.0.0.1:3000",
+            // Local dev when mapping patches.wso2.com → 127.0.0.1 (see README).
+            "http://patches.wso2.com:3000"
         ],
         allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowCredentials: true,
@@ -37,20 +39,15 @@ import ballerina/log;
 }
 service / on new http:Listener(9090) {
 
-    # Service initialization - Runs health checks if enabled.
     function init() {
-            error? fsHealth = file_storage:healthCheck();
-            if fsHealth is error {
-                log:printError("Startup failed: File storage health check failed", fsHealth);
-                panic fsHealth;
-            }
+        error? fsHealth = file_storage:healthCheck();
+        if fsHealth is error {
+            log:printError("Startup failed: File storage health check failed", fsHealth);
+            panic fsHealth;
+        }
     }
 
-    # Health check endpoint - Verifies service and all dependencies.
-    #
-    # + return - OK response if healthy, Service Unavailable if any dependency fails
     resource function get health() returns http:Ok|http:ServiceUnavailable {
-        // Check file storage connectivity
         error? fileStorageHealth = file_storage:healthCheck();
         if fileStorageHealth is error {
             string customError = "Health check failed: File storage unavailable";
@@ -74,41 +71,9 @@ service / on new http:Listener(9090) {
         };
     }
 
-    # Get directory content from Azure File Share.
-    #
-    # + path - Optional directory path to list contents from
-    # + return - Array of FileShareItem or error response
-    resource function get directory\-content(string? path) returns file_storage:FileShareItem[]|
-    http:BadRequest|http:InternalServerError {
-        // Use empty string if path is not provided
-        string dirPath = path ?: "";
-        
-        // Validate path format
-        if !dirPath.matches(re `${ALLOWED_PATH_PATTERN}`) {
-            log:printError(string `Invalid path format: ${dirPath}`);
-            return <http:BadRequest>{
-                body: {message: ERR_MSG_INVALID_PATH}
-            };
-        }
-        
-        file_storage:FileShareItem[]|error items = file_storage:listItems(dirPath);
-        if items is error {
-            log:printError(string `Failed to list items at path: ${dirPath}`, items);
-            return <http:InternalServerError>{
-                body: {message: ERR_MSG_LIST_SECURITY_ADVISORIES}
-            };
-        }
-
-        return items;
-    }
-
-    # Get file content from Azure File Share.
-    #
-    # + path - Full path to the file
-    # + return - HTTP response with file content or error
+    # Stream file bytes from Azure File Share (used by the SPA for PDF advisory links).
     resource function get file(string path) returns http:Response|
     http:BadRequest|http:InternalServerError {
-        // Validate path format
         if !path.matches(re `${ALLOWED_PATH_PATTERN}`) {
             log:printError(string `Invalid path format: ${path}`);
             return <http:BadRequest>{

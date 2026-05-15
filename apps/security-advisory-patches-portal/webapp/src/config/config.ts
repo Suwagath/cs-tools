@@ -42,7 +42,6 @@ export const APP_NAME = window.config?.APP_NAME ?? 'Security Advisory Patches Po
 export const AppConfig = {
   serviceUrls: {
     health: `${ServiceBaseUrl}/health`,
-    listSecurityAdvisories: `${ServiceBaseUrl}/directory-content`,
     downloadSecurityAdvisory: `${ServiceBaseUrl}/file`,
   },
 };

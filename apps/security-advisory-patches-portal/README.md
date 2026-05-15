@@ -1,6 +1,6 @@
 # Security Advisory Patches Portal — User & Developer Guide
 
-This guide explains how the **Security Advisory Patches Portal** fits together: an **Azure Files** file share holds advisory documents, a **Ballerina** backend lists and downloads them, and a **React** web application lets authenticated users browse, preview, and download files.
+This guide explains how the **Security Advisory Patches Portal** fits together: advisory **PDFs** live in an **Azure Files** share, a **Ballerina** backend streams bytes by path, and a minimal **React** app signs users in with **Asgardeo**. Any URL whose path **ends with `.pdf`** loads that file; otherwise you see **404**.
 
 ---
 
@@ -8,11 +8,11 @@ This guide explains how the **Security Advisory Patches Portal** fits together: 
 
 | Role | What you do |
 |------|-------------|
-| **Content publisher** | Upload or update files and folders in the configured **Azure File Share** (Azure Portal, Azure Storage Explorer, AzCopy, automation, etc.). |
-| **End user (e.g. customer)** | Sign in with **Asgardeo**, open folders, preview supported file types, download files, and share deep links to a specific file. |
+| **Content publisher** | Upload or update PDFs (and folders) in the configured **Azure File Share** (Azure Portal, Storage Explorer, AzCopy, automation). |
+| **End user (e.g. customer)** | Sign in with **Asgardeo** and open the **PDF link** you were sent (path ends with **`.pdf`**). |
 | **Developer / operator** | Configure Azure credentials and share name, run or deploy the backend and webapp, tune CORS and `config.js` for each environment. |
 
-The webapp does **not** upload files to Azure. Publishing is always done **outside** the portal, directly against the file share the backend is wired to.
+The webapp does **not** upload files to Azure. Publishing is always done **outside** the portal.
 
 ---
 
@@ -22,7 +22,7 @@ The webapp does **not** upload files to Azure. Publishing is always done **outsi
 ┌─────────────────┐     HTTPS + Bearer token      ┌──────────────────┐
 │  React webapp   │ ─────────────────────────────► │  Ballerina API   │
 │  (Asgardeo OIDC)│ ◄───────────────────────────── │  (port 9090)     │
-└────────┬────────┘         JSON / blobs           └────────┬─────────┘
+└────────┬────────┘         PDF blob               └────────┬─────────┘
          │                                                    │
          │  window.config (config.js)                         │  account key or SAS
          │  BACKEND_BASE_URL, Asgardeo URLs                   ▼
@@ -31,44 +31,34 @@ The webapp does **not** upload files to Azure. Publishing is always done **outsi
                                                     └──────────────────┘
 ```
 
-- **Frontend**: Reads runtime settings from `public/config.js` (`window.config`). After sign-in, API calls include an `Authorization: Bearer <ID token>` header (see `webapp/src/utils/apiService.ts`).
-- **Backend**: Uses `ballerinax/azure_storage_service.files` to list directories/files and download file bytes. It performs a **health check** against the file share at startup.
+- **Frontend**: Reads runtime settings from `public/config.js`. After sign-in, paths ending in **`.pdf`** map to `GET /file?path=…` (share-relative path); the PDF is shown in-page. Other paths show **404** unless you are on **`/`** (short help text).
+- **Backend**: Uses `ballerinax/azure_storage_service.files` to **download file bytes only**. It performs a **health check** against the file share at startup.
 
 ---
 
 ## 3. Guide for end users
 
-### 3.1 Sign-in
+### 3.1 Sign-in and opening the site
 
-1. Open the portal URL provided by your organization.
+1. Use the portal hostname your organization gave you (for example `https://patches.example.com/`).
 2. You are redirected to **Asgardeo** to sign in.
-3. After a successful login, you land on the file explorer (root of the share as exposed by the app).
+3. If you land on **/** after login without having opened a PDF link first, you see a short message: open the **full URL** you received whose path ends with **`.pdf`**, or sign out and open the link from your email again.
+4. If you started from such a link before signing in, that URL is restored after login when the identity provider sends you back to the site root.
 
-If you opened a **direct link** to a folder or file before logging in, the app stores that path and sends you there after authentication.
+### 3.2 PDF viewing only
 
-### 3.2 Browse folders and files
+- There is **no** folder browser—only the PDF viewer when the link is valid and the file exists.
+- **Hyphen encoding** in URLs is unchanged: spaces become `-`, literal `-` in Azure names become `--`, with **`encodeURIComponent`** per segment (legacy `%20` links still decode).
+- If the first URL segment is **`patches`**, it is stripped when resolving the Azure path (existing **`/patches/…`** links keep working).
 
-- The left panel lists **folders** and **files** in the current directory.
-- Click a **folder** to go deeper. Use **breadcrumbs** in the header to go up or jump to a parent folder.
-- The root view is labeled **“Security Advisories”** in the UI when you are at the top level.
+### 3.3 Invalid links and missing files
 
-### 3.3 Open, preview, and download
+- If the path does not end with **`.pdf`**, you get a **404** page (except **`/`**, which shows the help text).
+- If the path ends with **`.pdf`** but the backend cannot return the file, you also see **404**.
 
-- Click a **file** to select it. A **preview panel** opens on the right when a file is selected (you can drag the divider to resize).
-- **In-browser preview** is available for:
-  - **PDF** (`pdf`)
-  - **Images**: `png`, `jpg`, `jpeg`, `gif`, `webp`, `svg`
-- Other types (for example Office documents, archives) show a **“Preview not available”** message; use **Download** to open them locally.
+### 3.4 Sign out
 
-### 3.4 Shareable URLs
-
-- URLs use a `/patches/...` prefix. For **readable paths**, spaces are shown as single hyphens, and **literal hyphens in a file or folder name are encoded as double hyphens** in the URL (for example a folder `September-Special` appears as `September--Special`, and `WSO2-2025-4585-…pdf` uses `--` wherever the real name has `-`). **Legacy** links that still use `%20` for spaces continue to work.
-- A link that ends with a **file name** (including an extension) opens that folder and selects the file for preview.
-- You can copy the browser address bar and share it with others who have portal access (they must be able to sign in). After sign-in, the app restores a pasted `/patches/...` link even when the identity provider returns you to the site root (`/`).
-
-### 3.5 Sign out
-
-Use **Sign out** in the header to leave the app and clear the Asgardeo session (behavior depends on your IdP configuration).
+Use **Sign out** in the header to leave the app (behavior depends on your IdP).
 
 ---
 
@@ -76,37 +66,19 @@ Use **Sign out** in the header to leave the app and clear the Asgardeo session (
 
 ### 4.1 Where files go
 
-Everything listed in the portal comes from **one** Azure file share, configured for the backend as:
+PDFs are served from **one** Azure file share (storage account name, share name, access key or SAS in Ballerina config).
 
-- **Storage account** name  
-- **File share** name  
-- **Authorization**: storage account **access key** or **SAS**, as configured (`authorizationMethod`: `accessKey` or SAS as supported by the Azure Files connector)
+### 4.2 Upload or update content
 
-Treat the storage account key and SAS as **secrets**. Store them in secure configuration or a secret manager, not in source control.
-
-### 4.2 How to upload or update content
-
-Use any standard method for Azure Files, for example:
-
-- [Azure Portal](https://portal.azure.com) → Storage account → File shares  
-- [Azure Storage Explorer](https://azure.microsoft.com/products/storage/storage-explorer/)  
-- [AzCopy](https://learn.microsoft.com/azure/storage/common/storage-use-azcopy-v10) or automation (CI/CD, scripts)
-
-**Folder layout** is up to your process (e.g. by product, date, or advisory ID). The portal simply mirrors the share’s directory tree from the share root.
+Use Portal, Storage Explorer, AzCopy, or automation—same as any Azure Files workflow.
 
 ### 4.3 Naming and path rules
 
-The backend validates paths with an allowlist-style pattern (alphanumeric, hyphen, underscore, dot, space, forward slash, and URL-encoded segments). Extremely long paths may be rejected (internal limit **2048** characters).
+The backend validates `path` with an allowlist-style pattern (alphanumeric, hyphen, underscore, dot, space, slash, URL-encoded segments). Prefer stable paths so emailed links stay valid.
 
-**Recommendations:**
+### 4.4 When updates appear
 
-- Use **clear, stable folder names** so support and customers can navigate predictably.
-- Prefer **ASCII** file and folder names when possible; if you use spaces or special characters, the webapp will URL-encode them in links.
-- Ensure **file extensions** are correct so preview and MIME types behave as expected.
-
-### 4.4 When changes appear in the portal
-
-The app reads **live** from Azure Files. New or updated files appear after **refresh** or when navigating into a folder again; there is no separate “publish” step inside the portal.
+The next successful fetch loads the **current** bytes from Azure (reload the page if you replaced the file).
 
 ---
 
@@ -116,55 +88,36 @@ The app reads **live** from Azure Files. New or updated files appear after **ref
 
 | Path | Purpose |
 |------|---------|
-| `backend/` | Ballerina package `security_advisories_fileshare` — HTTP API + Azure Files module |
-| `webapp/` | React (CRA + `react-app-rewired`) SPA with Asgardeo and Redux |
+| `backend/` | Ballerina package `security_advisories_fileshare` — health + `/file` |
+| `webapp/` | React SPA — Asgardeo, Redux (auth only), PDF viewer |
 
 ### 5.2 Prerequisites
 
-- **Ballerina** `2201.12.9` (see `backend/Ballerina.toml`)
-- **Node.js** (compatible with `react-scripts` 5 / TypeScript 4.9)
+- **Ballerina** `2201.12.9` (`backend/Ballerina.toml`)
+- **Node.js** compatible with `react-scripts` 5 / TypeScript 4.9
 
 ### 5.3 Backend configuration
 
-Configurable values are read from Ballerina config (e.g. `Config.toml` or `Config.toml.local`). Structure:
-
-```toml
-[security_advisories_fileshare.file_storage]
-fileShareName = "<your-file-share-name>"
-
-[security_advisories_fileshare.file_storage.fileStorageConfig]
-accountName = "<storage-account-name>"
-accessKeyOrSAS = "<secret>"
-authorizationMethod = "accessKey"  # or SAS as applicable
-```
-
-Use `Config.toml.local` for local secrets and **exclude** it from git. Never commit real keys.
-
-Run the service (from `backend/`):
+Same `Config.toml` / `Config.toml.local` shape as before (`file_share` + credentials). Run:
 
 ```bash
-bal run
+cd backend && bal run
 ```
 
-Default listener: **9090**.
-
-**Startup**: The service calls the file share during initialization; if the share is unreachable, the process **fails fast** (check credentials, network, and share name).
+Listener **9090** by default; startup fails fast if the share is unreachable.
 
 ### 5.4 Backend HTTP API
-
-Base URL is wherever you host the listener (e.g. `http://localhost:9090` in development).
 
 | Method | Path | Query | Description |
 |--------|------|--------|-------------|
 | `GET` | `/health` | — | Liveness: file share reachable |
-| `GET` | `/directory-content` | `path` optional | List files and folders under `path` (empty = share root). Returns JSON array of items (`name`, `isFolder`, optional `size`, `contentType`). |
-| `GET` | `/file` | `path` required | Download file bytes; response includes `Content-Type` and `Content-Disposition: inline` |
+| `GET` | `/file` | `path` required | PDF (or other) bytes; `Content-Disposition: inline` |
 
-Invalid `path` values yield **400**; listing/download failures yield **500** with a generic message in the body.
+Invalid `path` → **400**; download errors → **500**.
 
 ### 5.5 CORS
 
-`backend/service.bal` configures CORS for local development (`http://localhost:3000`, `http://127.0.0.1:3000`). For other origins, update `allowOrigins` (and redeploy).
+`backend/service.bal` allows `http://localhost:3000` and `http://127.0.0.1:3000` by default.
 
 ### 5.6 Webapp configuration (`config.js`)
 
@@ -172,14 +125,14 @@ The app loads `public/config.js` before the bundle. Define `window.config` with 
 
 | Key | Purpose |
 |-----|---------|
-| `APP_NAME` | Shown in UI / title context |
+| `APP_NAME` | Title context |
 | `ASGARDEO_BASE_URL` | Asgardeo server URL |
 | `ASGARDEO_CLIENT_ID` | OIDC client ID |
-| `AUTH_SIGN_IN_REDIRECT_URL` | Post-login redirect URI registered in Asgardeo |
+| `AUTH_SIGN_IN_REDIRECT_URL` | Post-login redirect URI (typically site root `/`) |
 | `AUTH_SIGN_OUT_REDIRECT_URL` | Post-logout redirect |
-| `BACKEND_BASE_URL` | API origin (no trailing slash required on paths; client builds `/health`, `/directory-content`, `/file`) |
+| `BACKEND_BASE_URL` | API origin for `/health` and `/file` |
 
-Example skeleton (replace values):
+Example:
 
 ```javascript
 window.config = {
@@ -192,37 +145,63 @@ window.config = {
 };
 ```
 
-Run the webapp (from `webapp/`):
+From `webapp/`:
 
 ```bash
 npm install
 npm start
 ```
 
-Default dev server: **3000** (matches backend CORS).
+Default dev server **3000** (matches backend CORS).
 
-### 5.7 Authentication note for production
+#### Using `patches.wso2.com` (or another hostname) on your machine
 
-The SPA enforces login via **Asgardeo**. The backend endpoints shown above do not, in the current code, validate the JWT; they rely on **network placement** (private API, API gateway, mTLS, etc.) in production. Plan accordingly so the file API is not anonymously reachable from the public internet unless you intend that.
+You do **not** need that hostname for routing—the app only cares about paths such as `/patches/…/*.pdf`. Asgardeo **does** compare redirect URIs exactly, so if production uses `https://patches.wso2.com/` but your dev Asgardeo app only lists `http://localhost:3000/`, use one of these:
+
+1. **Add localhost redirects** in the Asgardeo SPA app (`http://localhost:3000/`, `http://127.0.0.1:3000/`) and keep testing at `http://localhost:3000`—simplest.
+
+2. **Match production hostname locally**:
+
+   - Map the name to your loopback interface (macOS/Linux: edit `/etc/hosts` as admin):
+
+     ```text
+     127.0.0.1 patches.wso2.com
+     ```
+
+   - Start the webapp bound to that host so the browser URL matches what you register in Asgardeo:
+
+     ```bash
+     npm run start:patches-host
+     ```
+
+     Then open **`http://patches.wso2.com:3000/`** (not `https` unless you terminate TLS locally).
+
+   - Set `AUTH_SIGN_IN_REDIRECT_URL` and `AUTH_SIGN_OUT_REDIRECT_URL` in `public/config.js` to **`http://patches.wso2.com:3000/`** (same origin + port + trailing slash as in Asgardeo).
+
+   - In Asgardeo, add **`http://patches.wso2.com:3000`** as an allowed redirect URL.
+
+The backend [`backend/service.bal`](backend/service.bal) CORS list includes `http://patches.wso2.com:3000` for this pattern; add more origins there if you use another hostname.
+
+### 5.7 Production authentication note
+
+The SPA sends a Bearer token; the **backend does not validate JWT** in this codebase—place the API behind a private network, gateway, or similar.
 
 ### 5.8 Troubleshooting
 
 | Symptom | Things to check |
 |--------|------------------|
-| Backend won’t start | Share name, account name, key/SAS, firewall rules on the storage account |
-| Empty folders in UI | Actual objects in the share under that path; Azure permission of the credential |
-| 400 on API | Path characters outside allowed pattern |
-| CORS errors in browser | `allowOrigins` includes your webapp origin; HTTPS vs HTTP |
-| Preview fails | File missing or renamed on share; large PDF/browser PDF support; ID token still valid |
-| Auth loops | Asgardeo redirect URIs match `config.js` exactly (including path and port) |
-| Deep link opens home after login | `AUTH_SIGN_IN_REDIRECT_URL` should be the app root (e.g. `http://localhost:3000/`). The app saves `/patches/...` before sign-in and restores it when the IdP returns you to `/`. |
+| Backend won’t start | Share name, credentials, firewall |
+| 400 on `/file` | Path characters outside allowed pattern |
+| Blank PDF | Wrong path mapping vs Azure layout; browser blocking blob iframe |
+| Auth loops | Redirect URIs match `config.js` |
+| Deep link → home after login | Keep sign-in redirect at site root; the app restores **`.pdf`** links from session |
 
 ---
 
 ## 6. Summary
 
-- **Publishers** maintain content in **Azure Files**; the portal reflects it in near real time.  
-- **Users** sign in with **Asgardeo**, browse the tree, preview PDFs/images, and download anything else.  
-- **Developers** configure **Ballerina** + Azure on the server and **`config.js`** + Asgardeo on the client, and align **CORS** and network security with the deployment environment.
+- **Publishers** put PDFs in **Azure Files** and distribute links whose path ends with **`.pdf`**.  
+- **Users** sign in with **Asgardeo** and open PDF links (path ends with **`.pdf`**). Invalid or missing files show **404**.  
+- **Developers** run **`bal`** + **`npm`**, configure **`config.js`**, CORS, and network boundaries.
 
-For code-level behavior, see `backend/service.bal`, `backend/modules/file_storage/`, and `webapp/src/view/FileExplorer/FileExplorerPage.tsx`.
+Code paths: `backend/service.bal`, `backend/modules/file_storage/`, `webapp/src/view/PatchesPdf/PatchesPdfPage.tsx`, `webapp/src/view/NotFound/NotFoundPage.tsx`, `webapp/src/app/AppHandler.tsx`.
