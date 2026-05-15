@@ -492,6 +492,8 @@ export function generateUpdateLevelsReportPdf(reportData: UpdateLevelsReportData
         firstToken = false;
       }
 
+      const URL_RE = /https?:\/\/[^\s]+/g;
+
       for (const line of lines) {
         const lineText = line.segments.map((s) => s.text).join("");
         if (!lineText.trim()) continue;
@@ -501,9 +503,33 @@ export function generateUpdateLevelsReportPdf(reportData: UpdateLevelsReportData
         for (const seg of line.segments) {
           const font = seg.bold ? "bold" : seg.italic ? "italic" : "normal";
           doc.setFont("helvetica", font);
-          doc.setTextColor(60, 60, 60);
-          doc.text(seg.text, x, y);
-          x += doc.getTextWidth(seg.text);
+          URL_RE.lastIndex = 0;
+          const parts: { text: string; isUrl: boolean }[] = [];
+          let last = 0;
+          let m: RegExpExecArray | null;
+          while ((m = URL_RE.exec(seg.text)) !== null) {
+            if (m.index > last) parts.push({ text: seg.text.slice(last, m.index), isUrl: false });
+            parts.push({ text: m[0], isUrl: true });
+            last = m.index + m[0].length;
+          }
+          if (last < seg.text.length) parts.push({ text: seg.text.slice(last), isUrl: false });
+
+          for (const part of parts) {
+            if (part.isUrl) {
+              doc.setTextColor(0, 102, 204);
+              doc.text(part.text, x, y);
+              const w = doc.getTextWidth(part.text);
+              doc.setDrawColor(0, 102, 204);
+              doc.line(x, y + 0.8, x + w, y + 0.8);
+              doc.setDrawColor(0, 0, 0);
+              doc.link(x, y - 4, w, 5.5, { url: part.text });
+              x += w;
+            } else {
+              doc.setTextColor(60, 60, 60);
+              doc.text(part.text, x, y);
+              x += doc.getTextWidth(part.text);
+            }
+          }
         }
         y += lineH;
       }
@@ -512,7 +538,7 @@ export function generateUpdateLevelsReportPdf(reportData: UpdateLevelsReportData
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0);
-    y += 2;
+    y += 5;
   };
 
   // ===== TITLE =====
