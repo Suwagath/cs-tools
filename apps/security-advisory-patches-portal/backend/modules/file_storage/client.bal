@@ -20,7 +20,7 @@ import ballerinax/azure_storage_service.files;
 # Credentials and account settings for `ballerinax/azure_storage_service.files`.
 configurable AzureFileStorageConfig fileStorageConfig = ?;
 
-# Name of the Azure Files share (must match the share in the storage account).
+# Name of the Azure Files share.
 configurable string fileShareName = ?;
 
 # Shared `FileClient` used for all share operations in this package.
