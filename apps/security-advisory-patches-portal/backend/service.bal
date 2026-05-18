@@ -39,8 +39,6 @@ public isolated service class ErrorInterceptor {
     }
 }
 
-# HTTP API: health check and authenticated file download for the Security Advisory Patches SPA.
-# CORS is intentionally not configured here; parent deployments typically terminate TLS and set CORS at a gateway or reverse proxy.
 service http:InterceptableService / on new http:Listener(9090) {
 
     # Request interceptors.
@@ -137,10 +135,15 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         string contentType = file_storage:getContentType(filePath);
         string fileName = file_storage:getFileName(filePath);
+        string|error encodedFileName = url:encode(fileName, "UTF-8");
+        if encodedFileName is error {
+            log:printError("Failed to encode filename for Content-Disposition", encodedFileName);
+            return <http:InternalServerError>{body: {message: ERR_MSG_DOWNLOAD_SECURITY_ADVISORY}};
+        }
         http:Response response = new;
         response.setPayload(fileBytes);
         response.setHeader("Content-Type", contentType);
-        response.setHeader("Content-Disposition", string `inline; filename="${fileName}"`);
+        response.setHeader("Content-Disposition", string `inline; filename*=UTF-8''${encodedFileName}`);
         return response;
     }
 }

@@ -16,17 +16,32 @@
 // under the License.
 import ballerina/url;
 
-# Validate share-relative path length (empty path is allowed).
+# Validate share-relative path syntax and length before Azure SDK calls.
 #
 # + path - Path to validate
-# + return - `()` if valid, or an error if the path is too long
+# + return - `()` if valid, or an error if the path is empty, too long, or malformed
 public isolated function validatePath(string path) returns error? {
     if path == "" {
-        return;
+        return error(ERR_MSG_INVALID_PATH);
     }
 
     if path.length() > MAX_PATH_LENGTH {
         return error(ERR_MSG_PATH_TOO_LONG);
+    }
+
+    if path.includes("\\") || path.includes("\u{0000}") {
+        return error(ERR_MSG_INVALID_PATH);
+    }
+
+    if path.startsWith(FOLDER_DELIMITER) || path.endsWith(FOLDER_DELIMITER) || path.includes("//") {
+        return error(ERR_MSG_INVALID_PATH);
+    }
+
+    string[] segments = re `${FOLDER_DELIMITER}`.split(path);
+    foreach string segment in segments {
+        if segment == "" || segment == "." || segment == ".." {
+            return error(ERR_MSG_INVALID_PATH);
+        }
     }
 
     return;
