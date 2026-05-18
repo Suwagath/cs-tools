@@ -66,7 +66,7 @@ public isolated service class JwtInterceptor {
             }
         }
 
-        log:printError(string `${userInfo.email} is missing required permissions, only has ${userInfo.groups.toBalString()}`);
+        log:printError("Forbidden: caller lacks required group for advisory file download");
 
         return <http:Forbidden>{body: {message: "Insufficient privileges!"}};
     }
