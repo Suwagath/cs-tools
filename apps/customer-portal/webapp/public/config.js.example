@@ -21,7 +21,6 @@ window.config = {
 
   // ── Mobile app download prompt (WSO2 Super App) ─────────────────────────────
   // On detected mobile devices, blocks the web portal and shows store download links.
-  // Customer Portal runs as a micro app inside the WSO2 Super App (no browser bypass).
   CUSTOMER_PORTAL_MOBILE_APP_PROMPT_ENABLED: false,
   CUSTOMER_PORTAL_MOBILE_APP_IOS_STORE_URL:
     "https://apps.apple.com/app/wso2/id<your-ios-app-id>",
