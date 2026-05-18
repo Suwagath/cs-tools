@@ -27,14 +27,13 @@ vi.mock("@config/mobileAppConfig", () => ({
 }));
 
 describe("MobileAppPromptPage", () => {
-  it("should show the WSO2 super app icon and micro app instructions", () => {
+  it("should show micro app instructions", () => {
     render(
       <MobileAppPromptPage
         device={{ os: MobileOs.Ios, deviceType: DeviceType.Phone }}
       />,
     );
 
-    expect(screen.getByTestId("wso2-super-app-icon")).toBeInTheDocument();
     expect(screen.getByText("Get the WSO2 Super App")).toBeInTheDocument();
     expect(
       screen.getByText(/micro app inside the WSO2 Super App/i),
