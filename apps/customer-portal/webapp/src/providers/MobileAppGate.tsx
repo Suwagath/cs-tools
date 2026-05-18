@@ -20,7 +20,7 @@ import {
   getMobileAppStoreUrl,
   MOBILE_APP_WEB_CONTINUE_STORAGE_KEY,
 } from "@config/mobileAppConfig";
-import type { MobileDeviceInfo } from "@models/mobileDevice";
+import type { MobileDeviceInfo } from "@/types/mobileDevice";
 import { detectMobileDevice } from "@utils/deviceDetection";
 import { type JSX, type ReactNode, useMemo, useState } from "react";
 
