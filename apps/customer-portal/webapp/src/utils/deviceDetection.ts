@@ -20,7 +20,7 @@ import {
   NavigatorPlatform,
   type DetectMobileDeviceOptions,
   type MobileDeviceInfo,
-} from "@models/mobileDevice";
+} from "@/types/mobileDevice";
 
 /**
  * Returns true when the browser reports an iPad (including iPadOS desktop UA).
