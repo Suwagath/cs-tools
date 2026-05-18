@@ -61,6 +61,7 @@ interface ProjectSwitcherProps {
   projectId?: string;
   onProjectChange: (projectId: string) => void;
   isAuthLoading?: boolean;
+  stackedHeaderRow?: boolean;
 }
 
 const LOAD_MORE_THRESHOLD_PX = 24;
