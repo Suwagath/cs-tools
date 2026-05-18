@@ -19,9 +19,8 @@ import { APIService } from './apiService';
 import { AppConfig } from '@src/config/config';
 
 /**
- * Download advisory bytes from `GET /file?path=…` using the configured backend URL and bearer auth.
- *
- * @param path - Share-relative path (slashes); must match Azure layout after SPA pathname mapping.
+ * Download advisory bytes from `GET /file?path=…`. The shared `APIService` must attach **`x-jwt-assertion`**
+ * (ID token) on each request; see `webapps/webapp-template` for the same pattern.
  */
 export const downloadSecurityAdvisory = async (path: string): Promise<Blob> => {
   const response = await APIService.getInstance().get(AppConfig.downloadFileUrl, {

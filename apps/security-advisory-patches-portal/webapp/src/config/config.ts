@@ -44,7 +44,8 @@ export const AsgardeoConfig: BaseURLAuthClientConfig = {
   signOutRedirectURL: window.config?.AUTH_SIGN_OUT_REDIRECT_URL ?? '',
   clientID: window.config?.ASGARDEO_CLIENT_ID ?? '',
   baseUrl: window.config?.ASGARDEO_BASE_URL ?? '',
-  scope: ['openid', 'profile'],
+  // Match webapps/webapp-template: `email` and `groups` must appear on the ID token for the Ballerina `CustomJwtPayload`.
+  scope: ['openid', 'email', 'groups'],
 };
 
 const serviceBaseUrl = window.config?.BACKEND_BASE_URL ?? '';

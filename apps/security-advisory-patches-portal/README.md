@@ -10,7 +10,7 @@ This guide explains how the **Security Advisory Patches Portal** fits together: 
 |------|-------------|
 | **Content publisher** | Upload or update PDFs (and folders) in the configured **Azure File Share** (Azure Portal, Storage Explorer, AzCopy, automation). |
 | **End user (e.g. customer)** | Sign in with **Asgardeo** and open the **PDF link** you were sent (path ends with **`.pdf`**). |
-| **Developer / operator** | Configure Azure credentials and share name, run or deploy the backend and webapp, tune CORS and `config.js` for each environment. |
+| **Developer / operator** | Configure Azure credentials and share name, run or deploy the backend and webapp, tune `config.js` and gateway CORS for each environment. |
 
 The webapp does **not** upload files to Azure. Publishing is always done **outside** the portal.
 
@@ -89,7 +89,7 @@ The next successful fetch loads the **current** bytes from Azure (reload the pag
 
 | Path | Purpose |
 |------|---------|
-| `backend/` | Ballerina package `security_advisories_fileshare` — health + `/file` |
+| `backend/` | Ballerina package `security_advisories_fileshare` — `modules/authorization` (JWT / roles), `modules/file_storage`, `GET /health`, `GET /file` |
 | `webapp/` | React SPA — Asgardeo, Redux (auth only), PDF viewer |
 
 ### 5.2 Prerequisites
@@ -99,7 +99,20 @@ The next successful fetch loads the **current** bytes from Azure (reload the pag
 
 ### 5.3 Backend configuration
 
-Same `Config.toml` / `Config.toml.local` shape as before (`file_share` + credentials). Run:
+`Config.toml` / `Config.toml.local` follow the same layout as [`webapps/backend-template`](../../webapps/backend-template): **Azure file share** settings plus **authorization** (Asgardeo group → API access).
+
+**Authorization** (required for `GET /file`; see `backend/modules/authorization/`):
+
+```toml
+[security_advisories_fileshare.authorization.authorizedRoles]
+advisoryPatchesReaderRole = "<Asgardeo-group-name>"
+```
+
+- Set `advisoryPatchesReaderRole` to the **exact** string that appears in the ID token **`groups`** array (same pattern as [`webapps/backend-template`](../../webapps/backend-template)).
+- For `/file`, the SPA sends the Asgardeo **ID token** on **`x-jwt-assertion`** (see [`webapps/webapp-template/src/utils/apiService.ts`](../../webapps/webapp-template/src/utils/apiService.ts)). OIDC scopes are set in `webapp/src/config/config.ts` to **`openid`**, **`email`**, and **`groups`** (same as the webapp template) so the ID token includes **`email`** and **`groups`** for `CustomJwtPayload`.
+- **`GET /health`** does **not** require a JWT (liveness / probes). **`OPTIONS`** preflight is also allowed without JWT.
+
+**File share** (same `security_advisories_fileshare.file_storage` tables as before). Then run:
 
 ```bash
 cd backend && bal run
@@ -111,18 +124,18 @@ Listener **9090** by default; startup fails fast if the share is unreachable.
 
 | Method | Path | Query | Description |
 |--------|------|--------|-------------|
-| `GET` | `/health` | — | Liveness: file share reachable |
-| `GET` | `/file` | `path` required | PDF (or other) bytes; `Content-Disposition: inline` |
+| `GET` | `/health` | — | Liveness: file share reachable (**no** `x-jwt-assertion`) |
+| `GET` | `/file` | `path` required | PDF bytes; requires **`x-jwt-assertion`** (ID token) and the configured reader **group**; `Content-Disposition: inline` |
 
 The server runs **`url:decode`** on the `path` query value (`UTF-8`) so `%2F` becomes `/` when needed.
 
-Invalid `path` → **400**; path valid but missing on the share (Azure **404**) → **404**; other download failures → **500**.
+Missing/invalid JWT or wrong groups → **403** / **500** as returned by the JWT interceptor; missing `path` context after auth → **400**. Invalid `path` → **400**; path valid but missing on the share (Azure **404**) → **404**; other download failures → **500**.
 
 The `path` query must be the **share-relative** path Azure expects (folder names, spaces, casing). The SPA maps lowercase **kebab-case** directory segments in the URL to that shape before calling `/file`; you can also send the literal path with **`%20`** for spaces (e.g. `Security%20Patches/...`).
 
 ### 5.5 CORS
 
-`backend/service.bal` allows `http://localhost:3000` and `http://127.0.0.1:3000` by default.
+This Ballerina package does **not** set `Access-Control-*` headers. In production, configure CORS (and allow **`x-jwt-assertion`** if the SPA is on another origin) at your **API gateway**, reverse proxy, or CDN in front of the service. For local dev you can use a small proxy (for example `npm` `setupProxy`) or run browser with relaxed security only for testing.
 
 ### 5.6 Webapp configuration (`config.js`)
 
@@ -157,7 +170,7 @@ npm install
 npm start
 ```
 
-Default dev server **3000** (matches backend CORS).
+Default dev server **3000**.
 
 #### Using `patches.wso2.com` (or another hostname) on your machine
 
@@ -185,18 +198,19 @@ You do **not** need that hostname for routing—the app only cares about paths s
 
    - In Asgardeo, add **`http://patches.wso2.com:3000`** as an allowed redirect URL.
 
-The backend [`backend/service.bal`](backend/service.bal) CORS list includes `http://patches.wso2.com:3000` for this pattern; add more origins there if you use another hostname.
-
 ### 5.7 Production authentication note
 
-The SPA sends a Bearer token; the **backend does not validate JWT** in this codebase—place the API behind a private network, gateway, or similar.
+The backend validates **`x-jwt-assertion`** with `ballerina/jwt` and checks Asgardeo **`groups`** against `authorizedRoles` (see `backend/modules/authorization/authorization.bal`). Still restrict network access (VPN, private link, gateway) as defense in depth.
 
 ### 5.8 Troubleshooting
 
 | Symptom | Things to check |
 |--------|------------------|
 | Backend won’t start | Share name, credentials, firewall |
-| 400 on `/file` | Path characters outside allowed pattern |
+| 400 on `/file` | Path characters outside allowed pattern; or missing user context after auth |
+| 403 on `/file` | User not in `advisoryPatchesReaderRole` group; ID token missing `groups` |
+| 500 “Missing invoker info header” | SPA not sending `x-jwt-assertion` (see `apiService.ts`) |
+| 500 “Malformed Invoker info object!” | Decode the ID token: it must include **`email`** and **`groups`**. Use scopes **`openid`**, **`email`**, **`groups`** in `webapp/src/config/config.ts`; in Asgardeo enable those attributes on the app and assign the user to a group matching `advisoryPatchesReaderRole` |
 | Blank PDF | Wrong path mapping vs Azure layout; browser blocking blob iframe |
 | Auth loops | Redirect URIs match `config.js` |
 | Deep link → home after login | Keep sign-in redirect at site root; the app restores **`.pdf`** links from session |
@@ -207,6 +221,6 @@ The SPA sends a Bearer token; the **backend does not validate JWT** in this code
 
 - **Publishers** put PDFs in **Azure Files** and distribute links whose path ends with **`.pdf`**.  
 - **Users** sign in with **Asgardeo** and open PDF links (path ends with **`.pdf`**). Invalid or missing files show **404**.  
-- **Developers** run **`bal`** + **`npm`**, configure **`config.js`**, CORS, and network boundaries.
+- **Developers** run **`bal`** + **`npm`**, configure **`config.js`**, gateway CORS, and network boundaries.
 
 Code paths: `backend/service.bal`, `backend/modules/file_storage/`, `webapp/src/view/PatchesPdf/PatchesPdfPage.tsx`, `webapp/src/view/NotFound/NotFoundPage.tsx`, `webapp/src/app/AppHandler.tsx`.

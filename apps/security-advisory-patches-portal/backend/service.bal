@@ -14,6 +14,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+import security_advisories_fileshare.authorization;
 import security_advisories_fileshare.file_storage;
 
 import ballerina/http;
@@ -21,22 +22,33 @@ import ballerina/log;
 import ballerina/url;
 import ballerinax/azure_storage_service.files as azure_files;
 
-# HTTP API: health check and authenticated file download for the Security Advisory Patches SPA.
-@http:ServiceConfig {
-    cors: {
-        allowOrigins: [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://patches.wso2.com:3000"
-        ],
-        allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowCredentials: true,
-        allowHeaders: ["x-jwt-assertion", "Authorization", "Content-Type"],
-        exposeHeaders: [],
-        maxAge: 84900
+public isolated service class ErrorInterceptor {
+    *http:ResponseErrorInterceptor;
+
+    isolated remote function interceptResponseError(error err, http:RequestContext ctx) returns http:BadRequest|error {
+        if err is http:PayloadBindingError {
+            string customError = "Payload binding failed!";
+            log:printError(customError, err);
+            return <http:BadRequest>{
+                body: {
+                    message: customError
+                }
+            };
+        }
+        return err;
     }
 }
-service / on new http:Listener(9090) {
+
+# HTTP API: health check and authenticated file download for the Security Advisory Patches SPA.
+# CORS is intentionally not configured here; parent deployments typically terminate TLS and set CORS at a gateway or reverse proxy.
+service http:InterceptableService / on new http:Listener(9090) {
+
+    # Request interceptors.
+    #
+    # + return - Interceptor chain executed for every request
+    public function createInterceptors() returns http:Interceptor[] {
+        return [new authorization:JwtInterceptor(), new ErrorInterceptor()];
+    }
 
     # Fail fast at startup if the file share is not reachable.
     function init() {
@@ -74,12 +86,31 @@ service / on new http:Listener(9090) {
         };
     }
 
-    # Stream file bytes for `path` (share-relative). Query value is UTF-8 percent-decoded before validation.
+    # Stream file bytes for `path` (share-relative). Requires Asgardeo `x-jwt-assertion` and the reader group.
     #
+    # + ctx - Request context (populated by `JwtInterceptor` with `HEADER_USER_INFO`)
     # + path - Share-relative file path (query parameter)
-    # + return - Raw bytes with `Content-Type` and `Content-Disposition`, or `400` / `404` / `500` with JSON body
-    resource function get file(string path) returns http:Response|
-            http:BadRequest|http:NotFound|http:InternalServerError {
+    # + return - Raw bytes with `Content-Type` and `Content-Disposition`, or `400` / `403` / `404` / `500` with JSON body
+    resource function get file(http:RequestContext ctx, string path) returns http:Response|http:BadRequest|http:Forbidden|
+            http:NotFound|http:InternalServerError {
+
+        authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
+        if userInfo is error {
+            return <http:BadRequest>{
+                body: {
+                    message: "User information header not found!"
+                }
+            };
+        }
+
+        if !authorization:checkPermissions([authorization:authorizedRoles.advisoryPatchesReaderRole], userInfo.groups) {
+            return <http:Forbidden>{
+                body: {
+                    message: "Insufficient privileges!"
+                }
+            };
+        }
+
         string|error decodedPath = url:decode(path, "UTF-8");
         if decodedPath is error {
             log:printError(string `Invalid path query encoding: ${path}`, decodedPath);

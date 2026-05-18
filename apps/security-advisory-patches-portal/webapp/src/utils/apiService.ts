@@ -19,8 +19,8 @@ import axios, { AxiosInstance } from 'axios';
 import { attach, RaxConfig } from 'retry-axios';
 
 /**
- * Singleton Axios instance with optional Asgardeo bearer token injection and 401 retries (`retry-axios`).
- * Construct once after sign-in so the auth callback is registered.
+ * Singleton Axios instance with Asgardeo ID token on `x-jwt-assertion` and 401 retries (`retry-axios`),
+ * aligned with `webapps/webapp-template` and the Ballerina `JwtInterceptor`.
  */
 export class APIService {
   private static _instance: AxiosInstance;
@@ -29,7 +29,8 @@ export class APIService {
   private static _authInterceptorId: number | null = null;
 
   /**
-   * @param callback - Returns a fresh ID token for `Authorization: Bearer` on each request (and on retry).
+   * @param callback - Returns a fresh Asgardeo ID token for `x-jwt-assertion` on each request (and on retry),
+   *                   matching `webapps/webapp-template` / backend JWT interceptor expectations.
    */
   constructor(callback: () => Promise<{ idToken: string }>) {
     if (!APIService._instance) {
@@ -88,7 +89,7 @@ export class APIService {
         if (APIService._callback && APIService._initialized) {
           try {
             const res = await APIService._callback();
-            config.headers.set('Authorization', 'Bearer ' + res.idToken);
+            config.headers.set('x-jwt-assertion', res.idToken);
           } catch (error) {
             console.error('Failed to get token:', error);
           }

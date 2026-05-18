@@ -128,6 +128,9 @@ dependencies = [
 	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "time"}
 ]
+modules = [
+	{org = "ballerina", packageName = "jwt", moduleName = "jwt"}
+]
 
 [[package]]
 org = "ballerina"
@@ -376,6 +379,7 @@ name = "security_advisories_fileshare"
 version = "1.0.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
+	{org = "ballerina", name = "jwt"},
 	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "url"},
 	{org = "ballerinai", name = "observe"},
@@ -383,6 +387,7 @@ dependencies = [
 ]
 modules = [
 	{org = "wso2", packageName = "security_advisories_fileshare", moduleName = "security_advisories_fileshare"},
+	{org = "wso2", packageName = "security_advisories_fileshare", moduleName = "security_advisories_fileshare.authorization"},
 	{org = "wso2", packageName = "security_advisories_fileshare", moduleName = "security_advisories_fileshare.file_storage"}
 ]
 
