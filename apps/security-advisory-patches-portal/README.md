@@ -105,10 +105,10 @@ The next successful fetch loads the **current** bytes from Azure (reload the pag
 
 ```toml
 [security_advisories_fileshare.authorization.authorizedRoles]
-advisoryPatchesReaderRole = "<Asgardeo-group-name>"
+securityPatchesUserRole = "<Asgardeo-group-name>"
 ```
 
-- Set `advisoryPatchesReaderRole` to the **exact** string that appears in the ID token **`groups`** array.
+- Set `securityPatchesUserRole` to the **exact** string that appears in the ID token **`groups`** array.
 - For `/file`, the SPA sends the Asgardeo **ID token** on **`x-jwt-assertion`**. OIDC scopes are set in `webapp/src/config/config.ts` to **`openid`**, **`email`**, and **`groups`** so the ID token includes **`email`** and **`groups`** for `CustomJwtPayload`.
 - **`GET /health`** does **not** require a JWT (liveness / probes). **`OPTIONS`** preflight is also allowed without JWT.
 
@@ -125,7 +125,7 @@ Listener **9090** by default; startup fails fast if the share is unreachable.
 | Method | Path | Query | Description |
 |--------|------|--------|-------------|
 | `GET` | `/health` | — | Liveness: file share reachable (**no** `x-jwt-assertion`) |
-| `GET` | `/file` | `path` required | PDF bytes; requires **`x-jwt-assertion`** (ID token) and the configured reader **group**; `Content-Disposition: inline` |
+| `GET` | `/file` | `path` required | PDF bytes; requires **`x-jwt-assertion`** (ID token) and membership in the **`securityPatchesUserRole`** Asgardeo group; `Content-Disposition: inline` |
 
 The server runs **`url:decode`** on the `path` query value (`UTF-8`) so `%2F` becomes `/` when needed.
 
@@ -170,7 +170,7 @@ Default dev server **`http://localhost:3000`**. Register that origin in your Asg
 
 ### 5.6 Production authentication note
 
-The backend reads **`x-jwt-assertion`** (JWT decode) and checks Asgardeo **`groups`** against `authorizedRoles` (see `backend/modules/authorization/authorization.bal`). Still restrict network access (VPN, private link, gateway) as defense in depth.
+The backend reads **`x-jwt-assertion`** (JWT decode) and checks Asgardeo **`groups`** against `authorizedRoles` (see `backend/modules/authorization/authorization.bal`).
 
 ### 5.7 Troubleshooting
 
@@ -178,9 +178,10 @@ The backend reads **`x-jwt-assertion`** (JWT decode) and checks Asgardeo **`grou
 |--------|------------------|
 | Backend won’t start | Share name, credentials, firewall |
 | 400 on `/file` | Path fails segment validation (e.g. `..`, empty segment); or missing user context after auth |
-| 403 on `/file` | User not in `advisoryPatchesReaderRole` group; ID token missing `groups` |
+| 403 on `/file` | User not in `securityPatchesUserRole` group; ID token missing `groups` |
 | 400 "User information header not found!" | Request reached `/file` without expected auth context; verify JWT interceptor wiring and that SPA sends `x-jwt-assertion` (see `apiService.ts`) |
-| 500 auth/JWT payload errors | Decode the ID token: it must include **`email`** and **`groups`**. Use scopes **`openid`**, **`email`**, **`groups`** in `webapp/src/config/config.ts`; in Asgardeo enable those attributes on the app and assign the user to a group matching `advisoryPatchesReaderRole` |
+| 500 "Missing invoker info header" | SPA not sending `x-jwt-assertion` (see `apiService.ts`) |
+| 500 "Malformed Invoker info object!" | Decode the ID token: it must include **`email`** and **`groups`**. Use scopes **`openid`**, **`email`**, **`groups`** in `webapp/src/config/config.ts`; in Asgardeo enable those attributes on the app and assign the user to a group matching `securityPatchesUserRole` |
 | Blank PDF | Wrong path mapping vs Azure layout; browser blocking blob iframe |
 | Auth loops | Redirect URIs match `config.js` |
 | Deep link → home after login | Keep sign-in redirect at site root; the app restores **`.pdf`** links from session |

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 WSO2 LLC. (https://www.wso2.com).
+// Copyright (c) 2026 WSO2 LLC. (https://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -25,6 +25,6 @@ public type CustomJwtPayload record {
 
 # Application specific role mapping.
 public type PatchesPortalRoles record {|
-    # Group name that may download advisory PDFs via `GET /file`
-    string advisoryPatchesReaderRole;
+    # Asgardeo group name that may download advisory PDFs via `GET /file`.
+    string securityPatchesUserRole;
 |};

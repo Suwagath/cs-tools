@@ -1,4 +1,4 @@
-// Copyright (c) 2025 WSO2 LLC. (https://www.wso2.com).
+// Copyright (c) 2026 WSO2 LLC. (https://www.wso2.com).
 //
 // WSO2 LLC. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -39,6 +39,23 @@ public isolated service class ErrorInterceptor {
     }
 }
 
+@display {
+    label: "Security Advisories File Share Backend",
+    id: "security-advisories/files-backend"
+}
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000"
+        ],
+        allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowCredentials: true,
+        allowHeaders: ["x-jwt-assertion", "Authorization", "Content-Type"],
+        exposeHeaders: [],
+        maxAge: 84900
+    }
+}
 service http:InterceptableService / on new http:Listener(9090) {
 
     # Request interceptors.
@@ -101,7 +118,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermissions([authorization:authorizedRoles.advisoryPatchesReaderRole], userInfo.groups) {
+        if !authorization:checkPermissions([authorization:authorizedRoles.securityPatchesUserRole], userInfo.groups) {
             return <http:Forbidden>{
                 body: {
                     message: "Insufficient privileges!"
