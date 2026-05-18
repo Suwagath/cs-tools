@@ -92,7 +92,7 @@ export interface SearchBarProps {
   /** Project ID for case search. When absent, search is disabled. */
   projectId?: string;
   excludeS0?: boolean;
-  /** Expands to fill the header second-row slot (tablet/phone layout). */
+  /** Expands to fill remaining header space beside the project switcher. */
   fillAvailableWidth?: boolean;
 }
 
@@ -358,12 +358,12 @@ export default function SearchBar({
         width: "100%",
         maxWidth: fillAvailableWidth
           ? "100%"
-          : { xs: "100%", md: 380, lg: 560, xl: 640 },
+          : { xs: "100%", md: 380, lg: 420, xl: 560 },
         ...(fillAvailableWidth
-          ? {}
+          ? { width: "100%" }
           : {
-              minWidth: { md: 200, lg: 400, xl: 480 },
-              width: { lg: 520, xl: 600 },
+              minWidth: { md: 200, lg: 240, xl: 360 },
+              width: { lg: "100%", xl: "100%" },
             }),
       }}
     >
