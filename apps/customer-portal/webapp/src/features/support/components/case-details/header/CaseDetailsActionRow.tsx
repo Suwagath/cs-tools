@@ -23,7 +23,7 @@ import {
   useTheme,
   type Theme,
 } from "@wso2/oxygen-ui";
-import CaseStateConfirmDialog from "./CaseStateConfirmDialog";
+import CaseStateConfirmDialog from "@features/support/components/case-details/dialogs/CaseStateConfirmDialog";
 import { type JSX, useState } from "react";
 import {
   CASE_STATUS_ACTIONS,
