@@ -43,7 +43,7 @@ export default function CaseStateConfirmDialog({
   onConfirm,
 }: CaseStateConfirmDialogProps): JSX.Element {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={isPending ? undefined : onClose} maxWidth="xs" fullWidth>
       <DialogTitle
         sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
       >
