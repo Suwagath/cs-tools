@@ -72,8 +72,11 @@ export default function SupportPage(): JSX.Element {
     caseTypes: [CaseType.DEFAULT_CASE],
   });
 
-  const { data: filterMetadata, isLoading: isFilterMetadataLoading, isError: isFilterMetadataError } =
-    useGetProjectFilters(projectId || "");
+  const {
+    data: filterMetadata,
+    isLoading: isFilterMetadataLoading,
+    isError: isFilterMetadataError,
+  } = useGetProjectFilters(projectId || "");
 
   const nonClosedStatusIds = useMemo(
     () => resolveCasesTableDefaultStatusIds(filterMetadata?.caseStates),
@@ -129,6 +132,7 @@ export default function SupportPage(): JSX.Element {
     messages: c.messageCount,
     kbArticles: 0,
     status: c.state?.label ?? "Open",
+    createdBy: c.createdBy ?? undefined,
   }));
 
   const isActuallyLoading = isAuthLoading || isLoading || (!stats && !isError);
@@ -140,13 +144,17 @@ export default function SupportPage(): JSX.Element {
         navigate("cases?statusFilter=active", { state: { returnTo: path } });
         break;
       case "activeChats":
-        navigate("conversations?statusFilter=active", { state: { returnTo: path } });
+        navigate("conversations?statusFilter=active", {
+          state: { returnTo: path },
+        });
         break;
       case "resolvedPast30DaysCasesCount":
         navigate("cases?statusFilter=resolved", { state: { returnTo: path } });
         break;
       case "resolvedChats":
-        navigate("conversations?statusFilter=resolvedViaChat", { state: { returnTo: path } });
+        navigate("conversations?statusFilter=resolvedViaChat", {
+          state: { returnTo: path },
+        });
         break;
     }
   };
@@ -164,7 +172,10 @@ export default function SupportPage(): JSX.Element {
   }, [stats, projectId, logger]);
 
   return (
-    <Stack spacing={3} sx={{ width: "100%", minWidth: 0 }}>
+    <Stack
+      spacing={3}
+      sx={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }}
+    >
       <CasesOverviewStatCard
         isLoading={isActuallyLoading}
         isError={isError}
@@ -174,7 +185,12 @@ export default function SupportPage(): JSX.Element {
       <Grid
         container
         spacing={3}
-        sx={{ alignItems: "stretch", minWidth: 0, width: "100%", overflowX: "hidden" }}
+        sx={{
+          alignItems: "stretch",
+          minWidth: 0,
+          width: "100%",
+          overflowX: "hidden",
+        }}
       >
         <Grid size={{ xs: 12, lg: 6 }} sx={{ display: "flex", minWidth: 0 }}>
           <SupportOverviewCard

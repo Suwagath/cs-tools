@@ -30,7 +30,6 @@ import type { JSX } from "react";
 import { statItems } from "@features/project-details/constants/projectDetailsConstants";
 import type { ProjectStatisticsCardProps } from "@features/project-details/types/projectDetailsComponents";
 
-const SKELETON_COUNT = 9;
 
 const StatCardSkeleton = ({ gridSize }: { gridSize: object }): JSX.Element => (
   <Grid size={gridSize} sx={{ display: "flex" }}>
@@ -69,11 +68,18 @@ const ProjectStatisticsCard = ({
   isError,
   isSidebarOpen = false,
   showDeploymentsStat = true,
+  showServiceRequestStat = true,
+  showChangeRequestStat = true,
+  showSecurityReportStat = true,
 }: ProjectStatisticsCardProps): JSX.Element => {
   const gridSize = isSidebarOpen ? { xs: 12, xl: 4 } : { xs: 12, sm: 6, lg: 4 };
-  const visibleStats = showDeploymentsStat
-    ? statItems
-    : statItems.filter((s) => s.key !== "deployments");
+  const visibleStats = statItems.filter((s) => {
+    if (s.key === "deployments" && !showDeploymentsStat) return false;
+    if (s.key === "outstandingServiceRequestCount" && !showServiceRequestStat) return false;
+    if (s.key === "outstandingChangeRequestCount" && !showChangeRequestStat) return false;
+    if (s.key === "outstandingSraCount" && !showSecurityReportStat) return false;
+    return true;
+  });
   const isStatLoading = isLoading || (!isError && !stats);
   return (
     <Card sx={{ height: "100%" }}>
@@ -86,7 +92,7 @@ const ProjectStatisticsCard = ({
 
         <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
           {isStatLoading
-            ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+            ? Array.from({ length: visibleStats.length }).map((_, i) => (
                 <StatCardSkeleton key={i} gridSize={gridSize} />
               ))
             : visibleStats.map((stat) => {

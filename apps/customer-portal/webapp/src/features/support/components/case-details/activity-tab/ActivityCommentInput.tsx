@@ -235,7 +235,6 @@ export default function ActivityCommentInput({
             placeholder="Write a comment..."
             onSubmitKeyDown={handleSend}
             enterToSubmit={false}
-            shiftEnterToSubmit={true}
             onAttachmentClick={handleAttachmentClick}
             attachments={attachments.map((a) => a.file)}
             onAttachmentRemove={handleAttachmentRemove}
@@ -243,11 +242,6 @@ export default function ActivityCommentInput({
             maxHeight="310px"
             onPasteError={() =>
               showError("Image exceeds the maximum allowed size of 10 MB.")
-            }
-            onInlineImageTypeError={() =>
-              showError(
-                "Only jpg, jpeg, png, and webp images can be inserted inline.",
-              )
             }
             overlayElement={
               <Tooltip title="Send comment">

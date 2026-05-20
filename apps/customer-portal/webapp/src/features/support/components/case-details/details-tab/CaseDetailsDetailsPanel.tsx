@@ -216,22 +216,40 @@ export default function CaseDetailsDetailsPanel({
               />
             </Box>
           )}
-          {(!isServiceRequest || data?.issueType) && (
-            <Box>
-              <Typography {...labelSx}>Category</Typography>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Tag
-                  size={16}
-                  color={theme.palette.text.secondary}
-                  aria-hidden
-                />
-                <Typography {...valueSx}>
-                  {formatValue(data?.issueType)}
-                </Typography>
-              </Stack>
-            </Box>
+          {isEngagement ? (
+            data?.engagementType && (
+              <Box>
+                <Typography {...labelSx}>Engagement Type</Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Tag
+                    size={16}
+                    color={theme.palette.text.secondary}
+                    aria-hidden
+                  />
+                  <Typography {...valueSx}>
+                    {formatValue(data.engagementType)}
+                  </Typography>
+                </Stack>
+              </Box>
+            )
+          ) : (
+            (!isServiceRequest || data?.issueType) && (
+              <Box>
+                <Typography {...labelSx}>Category</Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Tag
+                    size={16}
+                    color={theme.palette.text.secondary}
+                    aria-hidden
+                  />
+                  <Typography {...valueSx}>
+                    {formatValue(data?.issueType)}
+                  </Typography>
+                </Stack>
+              </Box>
+            )
           )}
-          {isServiceRequest && data?.createdBy ? (
+          {data?.createdBy ? (
             <Box>
               <Typography {...labelSx}>Created by</Typography>
               <Typography {...valueSx}>

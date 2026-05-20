@@ -34,6 +34,7 @@ import { ChevronDown } from "@wso2/oxygen-ui-icons-react";
 import DeploymentCardLicenseFooter from "@features/project-details/components/deployments/deployment-card/DeploymentCardLicenseFooter";
 import DeploymentCardToolbar from "@features/project-details/components/deployments/deployment-card/DeploymentCardToolbar";
 import { useState, type JSX } from "react";
+import { useErrorBanner } from "@context/error-banner/ErrorBannerContext";
 import DeploymentDocumentList from "@deployments/DeploymentDocumentList";
 import DeploymentProductList from "@deployments/DeploymentProductList";
 import EditDeploymentModal from "@deployments/EditDeploymentModal";
@@ -60,6 +61,7 @@ export default function DeploymentCard({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const patchDeployment = usePatchDeployment();
   const downloadLicense = useDownloadDeploymentLicense();
+  const { showError } = useErrorBanner();
 
   const createdAtStr = formatProjectDateTime(createdOn ?? "");
   const updatedAtStr = formatProjectDateTime(updatedOn ?? "");
@@ -191,6 +193,7 @@ export default function DeploymentCard({
         projectId={projectId}
         onClose={() => setIsEditModalOpen(false)}
         onSuccess={() => setIsEditModalOpen(false)}
+        onError={(message) => showError(message)}
       />
 
       <DeleteDeploymentModal
@@ -207,6 +210,10 @@ export default function DeploymentCard({
             },
             {
               onSuccess: () => setIsDeleteModalOpen(false),
+              onError: (error) => {
+                setIsDeleteModalOpen(false);
+                showError(error.message);
+              },
             },
           );
         }}

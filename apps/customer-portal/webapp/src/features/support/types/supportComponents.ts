@@ -49,6 +49,7 @@ export type CaseDetailsHeaderProps = {
   severityLabel: string | null | undefined;
   statusLabel: string | null | undefined;
   assignedEngineerLabel?: string | null;
+  engagementTypeLabel?: string | null;
   statusChipIcon: ReactNode;
   statusChipSx: Record<string, unknown>;
   isLoading?: boolean;
@@ -97,6 +98,10 @@ export type CaseDetailsSectionProps = {
   isSecurityReport?: boolean;
   excludeS0?: boolean;
   isSeverityDisabled?: boolean;
+  isIssueTypeAutoDetected?: boolean;
+  isSeverityAutoDetected?: boolean;
+  isTitleFromChat?: boolean;
+  isDescriptionFromConversation?: boolean;
 };
 
 export type ChatMessageCardProps = {
@@ -458,6 +463,7 @@ export type ChatInputProps = {
   resetTrigger?: number;
   forceRichText?: boolean;
   disabled?: boolean;
+  typingDisabled?: boolean;
 };
 
 export type ChatHeaderProps = {

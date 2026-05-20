@@ -165,6 +165,7 @@ export default function EngagementsListSection({
         entityName={ENGAGEMENTS_LIST_ENTITY_LABEL}
         onCaseClick={onCaseClick}
         hideSeverity
+        showEngagementType
       />
 
       <ListPagination

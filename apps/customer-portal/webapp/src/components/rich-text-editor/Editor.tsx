@@ -36,7 +36,6 @@ import {
   scrollElement,
   INSERT_IMAGE_COMMAND,
 } from "@features/support/utils/richTextEditor";
-import { ALLOWED_INLINE_IMAGE_MIME_TYPES } from "@features/support/constants/supportConstants";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { type ReactNode, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Toolbar, {
@@ -135,12 +134,10 @@ const EnterSubmitPlugin = ({
   onSubmit,
   disabled,
   enterToSubmit = false,
-  shiftEnterToSubmit = false,
 }: {
   onSubmit?: () => void;
   disabled?: boolean;
   enterToSubmit?: boolean;
-  shiftEnterToSubmit?: boolean;
 }) => {
   const [editor] = useLexicalComposerContext();
 
@@ -175,13 +172,6 @@ const EnterSubmitPlugin = ({
           return true;
         }
 
-        if (shiftEnterToSubmit && event.shiftKey && !event.ctrlKey && !event.metaKey) {
-          if (event.isComposing) return false;
-          event.preventDefault();
-          onSubmit();
-          return true;
-        }
-
         if (!event.ctrlKey && !event.metaKey) return false;
         event.preventDefault?.();
         onSubmit();
@@ -191,7 +181,7 @@ const EnterSubmitPlugin = ({
     );
 
     return unregEnter;
-  }, [editor, onSubmit, disabled, enterToSubmit, shiftEnterToSubmit]);
+  }, [editor, onSubmit, disabled, enterToSubmit]);
 
   return null;
 };
@@ -218,13 +208,7 @@ const ResetPlugin = ({ resetTrigger }: { resetTrigger?: number }) => {
  * Handles paste events containing image data (e.g. Ctrl+C from screen, then Ctrl+V).
  * Reads the image as a data URL and inserts it via INSERT_IMAGE_COMMAND.
  */
-const ClipboardImagePlugin = ({
-  onPasteError,
-  onImageTypeError,
-}: {
-  onPasteError?: () => void;
-  onImageTypeError?: () => void;
-}): null => {
+const ClipboardImagePlugin = ({ onPasteError }: { onPasteError?: () => void }): null => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -239,11 +223,6 @@ const ClipboardImagePlugin = ({
           if (!file) continue;
 
           event.preventDefault();
-
-          if (!ALLOWED_INLINE_IMAGE_MIME_TYPES.has(item.type)) {
-            onImageTypeError?.();
-            break;
-          }
 
           if (file.size > MAX_PASTE_IMAGE_SIZE) {
             onPasteError?.();
@@ -322,7 +301,6 @@ const Editor = ({
   toolbarVariant = "full",
   onSubmitKeyDown,
   enterToSubmit = false,
-  shiftEnterToSubmit = false,
   placeholder = "Enter description...",
   id,
   showKeyboardHint = false,
@@ -331,7 +309,6 @@ const Editor = ({
   onBlur,
   overlayElement,
   onPasteError,
-  onInlineImageTypeError,
 }: {
   onAttachmentClick?: () => void;
   attachments?: File[];
@@ -345,7 +322,6 @@ const Editor = ({
   toolbarVariant?: ToolbarVariant;
   onSubmitKeyDown?: () => void;
   enterToSubmit?: boolean;
-  shiftEnterToSubmit?: boolean;
   placeholder?: string;
   id?: string;
   showKeyboardHint?: boolean;
@@ -355,7 +331,6 @@ const Editor = ({
   /** Optional element rendered as an absolute overlay at the bottom-right inside the editor. */
   overlayElement?: ReactNode;
   onPasteError?: () => void;
-  onInlineImageTypeError?: () => void;
 }): JSX.Element => {
   const oxygenTheme = useTheme();
   const logger = useLogger();
@@ -531,13 +506,13 @@ const Editor = ({
           <HistoryPlugin />
           <ListPlugin />
           <ImagesPlugin />
-          <ClipboardImagePlugin onPasteError={onPasteError} onImageTypeError={onInlineImageTypeError} />
+          <ClipboardImagePlugin onPasteError={onPasteError} />
           <LinkPlugin />
           <ClickableLinkPlugin />
           <InitialValuePlugin initialHtml={value} />
           <OnChangeHTMLPlugin onChange={onChange} />
           <ResetPlugin resetTrigger={resetTrigger} />
-          <EnterSubmitPlugin onSubmit={onSubmitKeyDown} disabled={disabled} enterToSubmit={enterToSubmit} shiftEnterToSubmit={shiftEnterToSubmit} />
+          <EnterSubmitPlugin onSubmit={onSubmitKeyDown} disabled={disabled} enterToSubmit={enterToSubmit} />
         </Box>
         {overlayElement && (
           <Box

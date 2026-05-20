@@ -29,15 +29,8 @@ import {
 } from "@wso2/oxygen-ui";
 import { File, Sparkles, Upload, X } from "@wso2/oxygen-ui-icons-react";
 import { type JSX } from "react";
-import { useErrorBanner } from "@context/error-banner/ErrorBannerContext";
-import {
-  CaseSeverity,
-  CaseSeverityLevel,
-} from "@features/support/constants/supportConstants";
-import {
-  isS0SeverityLabel,
-  getSeverityLegendColor,
-} from "@features/dashboard/utils/dashboard";
+import { CaseSeverity, CaseSeverityLevel } from "@features/support/constants/supportConstants";
+import { isS0SeverityLabel, getSeverityLegendColor } from "@features/dashboard/utils/dashboard";
 import Editor from "@components/rich-text-editor/Editor";
 
 /**
@@ -68,8 +61,11 @@ export function CaseDetailsSection({
   isSecurityReport = false,
   excludeS0 = false,
   isSeverityDisabled = false,
+  isIssueTypeAutoDetected = false,
+  isSeverityAutoDetected = false,
+  isTitleFromChat = false,
+  isDescriptionFromConversation = false,
 }: CaseDetailsSectionProps): JSX.Element {
-  const { showError } = useErrorBanner();
   const titleReadOnly = isTitleDisabled;
   const titleLength = title.trim().length;
   const isTitleTooLong = titleLength > 160;
@@ -171,7 +167,7 @@ export function CaseDetailsSection({
                 </Box>
               )}
             </Typography>
-            {!isRelatedCaseMode && (
+            {!isRelatedCaseMode && isTitleFromChat && (
               <Chip
                 label="Generated from chat"
                 size="small"
@@ -197,9 +193,7 @@ export function CaseDetailsSection({
               disabled={isLoading || titleReadOnly}
               error={isTitleTooLong}
               helperText={
-                isTitleTooLong
-                  ? "Title must be 160 characters or fewer."
-                  : undefined
+                isTitleTooLong ? "Title must be 160 characters or fewer." : undefined
               }
             />
             <Typography
@@ -222,7 +216,7 @@ export function CaseDetailsSection({
                 *
               </Box>
             </Typography>
-            {!isRelatedCaseMode && (
+            {!isRelatedCaseMode && isDescriptionFromConversation && (
               <Chip
                 label="From conversation"
                 size="small"
@@ -248,14 +242,9 @@ export function CaseDetailsSection({
             value={description}
             onChange={setDescription}
             maxHeight="210px"
-            onInlineImageTypeError={() =>
-              showError(
-                "Only jpg, jpeg, png, and webp images can be inserted inline.",
-              )
-            }
           />
 
-          {!isRelatedCaseMode && (
+          {!isRelatedCaseMode && isDescriptionFromConversation && (
             <Typography
               variant="caption"
               color="text.disabled"
@@ -406,7 +395,7 @@ export function CaseDetailsSection({
                     *
                   </Box>
                 </Typography>
-                {!isRelatedCaseMode && (
+                {!isRelatedCaseMode && isIssueTypeAutoDetected && (
                   <Chip
                     label="AI classified"
                     size="small"
@@ -461,7 +450,7 @@ export function CaseDetailsSection({
                     *
                   </Box>
                 </Typography>
-                {!isRelatedCaseMode && (
+                {!isRelatedCaseMode && isSeverityAutoDetected && (
                   <Chip
                     label="AI assessed"
                     size="small"
@@ -496,9 +485,7 @@ export function CaseDetailsSection({
                           width: 10,
                           height: 10,
                           borderRadius: "50%",
-                          bgcolor:
-                            selectedLevel?.color ??
-                            getSeverityLegendColor(CaseSeverityLevel.S4),
+                          bgcolor: selectedLevel?.color ?? getSeverityLegendColor(CaseSeverityLevel.S4),
                           flexShrink: 0,
                         }}
                       />
@@ -527,11 +514,7 @@ export function CaseDetailsSection({
                       }
                       return (
                         <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                          }}
+                          sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                         >
                           <Box
                             sx={{
@@ -555,11 +538,7 @@ export function CaseDetailsSection({
                     {severityLevels.map((lvl) => (
                       <MenuItem key={lvl.id} value={lvl.id}>
                         <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1.5,
-                          }}
+                          sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                         >
                           <Box
                             sx={{
