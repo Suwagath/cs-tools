@@ -38,26 +38,29 @@ interface BannerProps {
   banner: TopBannerItem;
 }
 
+const FALLBACK_STORAGE_KEY = "top_banner_fallback_v1";
+
 function Banner({ banner }: BannerProps): JSX.Element | null {
-  const { html, closeable, storageKey } = banner;
+  const { html, closeable } = banner;
+  const resolvedStorageKey = banner.storageKey || FALLBACK_STORAGE_KEY;
   const logger = useLogger();
   const [closed, setClosed] = useState(() =>
-    closeable ? isDismissed(storageKey) : false,
+    closeable ? isDismissed(resolvedStorageKey) : false,
   );
 
   useEffect(() => {
-    if (closeable && !storageKey) {
+    if (closeable && !banner.storageKey) {
       logger.error(
         "A top banner has closeable: true but no storageKey set. " +
           "A fallback key is being used — dismiss state may persist incorrectly.",
       );
     }
-  }, [closeable, storageKey, logger]);
+  }, [closeable, banner.storageKey, logger]);
 
   if (closed) return null;
 
   const handleClose = (): void => {
-    persistDismissal(storageKey);
+    persistDismissal(resolvedStorageKey);
     setClosed(true);
   };
 
@@ -67,7 +70,6 @@ function Banner({ banner }: BannerProps): JSX.Element | null {
       <div dangerouslySetInnerHTML={{ __html: html }} />
       {closeable && (
         <div
-          aria-hidden
           style={{
             position: "absolute",
             inset: 0,
