@@ -218,24 +218,6 @@ window.config = {
   //     </div>'
   // CUSTOMER_PORTAL_ANNOUNCEMENT_BANNER_HTML: '<div>...</div>',
 
-  // ── Mock data (development / testing only) ─────────────────────────────────
-  //
-  // These flags replace real API calls with local mock data. Use them during
-  // local development when the backend is unavailable, or in automated tests.
-  // Always set to false (or omit) in production.
-  //
-  // CUSTOMER_PORTAL_UPDATES_USE_MOCK  (optional — default: false)
-  //   true – product updates data is served from local mock fixtures.
-  // CUSTOMER_PORTAL_UPDATES_USE_MOCK: false,
-  //
-  // CUSTOMER_PORTAL_CONVERSATIONS_USE_MOCK  (optional — default: false)
-  //   true – conversation / chat history data is served from local mock fixtures.
-  // CUSTOMER_PORTAL_CONVERSATIONS_USE_MOCK: false,
-  //
-  // CUSTOMER_PORTAL_CASES_USE_MOCK  (optional — default: false)
-  //   true – support cases data is served from local mock fixtures.
-  // CUSTOMER_PORTAL_CASES_USE_MOCK: false,
-
   // ── Mobile app download prompt ─────────────────────────────────────────────
   //
   // CUSTOMER_PORTAL_MOBILE_APP_PROMPT_ENABLED  (optional — default: false)
