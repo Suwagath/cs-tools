@@ -15,7 +15,18 @@
 // under the License.
 
 import type { UIEvent } from "react";
+import DOMPurify from "dompurify";
 import { PAGINATED_SELECT_MENU_MAX_HEIGHT_PX } from "@constants/common";
+
+// Harden all sanitized <a target="_blank"> links against reverse tabnabbing.
+// Registered once at module load; applies to every DOMPurify.sanitize() call in the app.
+if (typeof window !== "undefined") {
+  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    if (node.tagName === "A" && node.getAttribute("target") === "_blank") {
+      node.setAttribute("rel", "noopener noreferrer");
+    }
+  });
+}
 
 /**
  * MenuList props for paginated selects: fixed max height + optional scroll handler.
