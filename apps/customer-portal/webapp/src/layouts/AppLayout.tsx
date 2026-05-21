@@ -32,7 +32,7 @@ import { useLocation, Outlet } from "react-router";
 import IdleTimeoutProvider from "@providers/IdleTimeoutProvider";
 import GlobalNotificationBanner from "@components/notification-banner/GlobalNotificationBanner";
 import HtmlAnnouncementBanner from "@components/announcement-banner/HtmlAnnouncementBanner";
-import TopBanner from "@components/top-banner/TopBanner";
+import TopBanners from "@components/top-banner/TopBanners";
 import Footer from "@components/footer/Footer";
 import Header from "@components/header/Header";
 import SideBar from "@components/side-nav-bar/SideBar";
@@ -228,7 +228,7 @@ export default function AppLayout({ children }: AppLayoutProps): JSX.Element {
           overflow: "hidden",
         }}
       >
-        <TopBanner />
+        <TopBanners />
         <GlobalNotificationBanner visible={notificationBannerConfig.visible} />
         <HtmlAnnouncementBanner />
         <AppShellLayout

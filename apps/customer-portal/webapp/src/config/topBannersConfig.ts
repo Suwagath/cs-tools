@@ -14,22 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { type JSX } from "react";
-
-/**
- * Renders an optional HTML banner above the main header, sourced from
- * CUSTOMER_PORTAL_TOP_BANNER_HTML in config.js.
- */
-export default function TopBanner(): JSX.Element | null {
-  const enabled = window.config?.CUSTOMER_PORTAL_TOP_BANNER_ENABLED;
-  const html = window.config?.CUSTOMER_PORTAL_TOP_BANNER_HTML;
-
-  if (!enabled || !html) return null;
-
-  return (
-    <div
-      style={{ display: "block", lineHeight: 0, fontSize: 0, overflow: "hidden" }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
+export interface TopBannerItem {
+  enabled: boolean;
+  html: string;
+  closeable: boolean;
+  storageKey: string;
 }
+
+export const topBannersConfig: TopBannerItem[] =
+  window.config?.CUSTOMER_PORTAL_TOP_BANNERS ?? [];
