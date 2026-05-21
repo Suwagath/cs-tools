@@ -50,7 +50,7 @@ function Banner({ banner }: BannerProps): JSX.Element | null {
 
   useEffect(() => {
     if (closeable && !banner.storageKey) {
-      logger.error(
+      logger.warn(
         "A top banner has closeable: true but no storageKey set. " +
           "A fallback key is being used — dismiss state may persist incorrectly.",
       );
