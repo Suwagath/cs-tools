@@ -15,3 +15,5 @@
 // under the License.
 
 const CONTENT_TYPE_APPLICATION_ZIP = "application/zip";
+const RETRY_COUNT = 3;
+const RETRY_INTERVAL = 2.0;

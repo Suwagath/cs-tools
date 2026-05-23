@@ -29,8 +29,8 @@ final http:Client productConsumptionTrackingClient = check new (productConsumpti
     http1Settings: {keepAlive: http:KEEPALIVE_NEVER},
     timeout: 300.0,
     retryConfig: {
-        count: 3,
-        interval: 2.0,
+        count: RETRY_COUNT,
+        interval: RETRY_INTERVAL,
         statusCodes: [
             http:STATUS_INTERNAL_SERVER_ERROR,
             http:STATUS_REQUEST_TIMEOUT,
