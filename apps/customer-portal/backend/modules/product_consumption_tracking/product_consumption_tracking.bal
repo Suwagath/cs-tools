@@ -27,6 +27,6 @@ public isolated function importDeploymentUsage(string email, byte[] zipFile)
         zip: zipFile.toBase64()
     };
 
-    return productConsumptionTrackingClient->/deployment\-usage.post(payload);
+    return productConsumptionTrackingClient->/deployment\-usages.post(payload);
 
 }
