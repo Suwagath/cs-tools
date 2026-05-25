@@ -192,6 +192,8 @@ export function resolveClosedCrStateIds(
  * @param actionRequired - Restrict to action-required states.
  * @param scheduledOnly - Restrict to scheduled state.
  * @param changeRequestStates - Raw states metadata from `useGetProjectFilters`.
+ * @param sortField - Active sort field.
+ * @param sortOrder - Sort direction.
  * @returns Request body without pagination.
  */
 export function buildChangeRequestSearchRequest(
@@ -201,6 +203,8 @@ export function buildChangeRequestSearchRequest(
   actionRequired: boolean = false,
   scheduledOnly: boolean = false,
   changeRequestStates?: MetadataItem[],
+  sortField: ChangeRequestSortField = ChangeRequestSortField.UpdatedOn,
+  sortOrder: SortOrder = SortOrder.DESC,
 ): Omit<ChangeRequestSearchRequest, "pagination"> {
   const selectedStateId = filters.stateId ? Number(filters.stateId) : undefined;
   const resolvedIds = actionRequired
@@ -225,8 +229,8 @@ export function buildChangeRequestSearchRequest(
       impactKey: filters.impactId ? Number(filters.impactId) : undefined,
     },
     sortBy: {
-      field: ChangeRequestSortField.UpdatedOn,
-      order: SortOrder.DESC,
+      field: sortField,
+      order: sortOrder,
     },
   };
 }
