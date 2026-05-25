@@ -21,7 +21,7 @@ import CaseListCsvExportButton, {
 
 export type AllCasesCsvExportButtonProps = Omit<
   CaseListCsvExportButtonProps,
-  "filenamePrefix" | "exportVariant"
+  "filenamePrefix" | "exportVariant" | "emptyMessage"
 >;
 
 /**
