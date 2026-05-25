@@ -43,9 +43,11 @@ import ChangeRequestsList from "@features/operations/components/change-requests/
 import ChangeRequestsCalendarView from "@features/operations/components/change-requests/ChangeRequestsCalendarView";
 import TabBar from "@components/tab-bar/TabBar";
 import { generateChangeRequestsSchedulePdf } from "@features/operations/utils/changeRequestsSchedulePdf";
+import { SortOrder } from "@/types/common";
 import { hasListSearchOrFilters, countListSearchAndFilters } from "@features/support/utils/support";
 import {
   ChangeRequestFilterDefinitionId,
+  ChangeRequestSortField,
   ChangeRequestsViewMode,
 } from "@features/operations/types/changeRequests";
 import {
@@ -61,6 +63,7 @@ import {
   CHANGE_REQUESTS_PAGE_TITLE_OUTSTANDING,
   CHANGE_REQUESTS_PAGE_TITLE_SCHEDULED,
   CHANGE_REQUESTS_SEARCH_PLACEHOLDER,
+  CHANGE_REQUESTS_SORT_FIELD_OPTIONS,
   CHANGE_REQUESTS_VIEW_TABS_CONFIG,
   OPERATIONS_LIST_BACK_LABEL,
   OPERATIONS_LIST_PAGE_SIZE,
@@ -104,6 +107,18 @@ export default function ChangeRequestsPage(): JSX.Element {
   );
   const [page, setPage] = useSessionState<number>(`${sessionPrefix}-page`, 1, undefined, { popOnly: true });
   const [rowsPerPage, setRowsPerPage] = useSessionState<number>(`${sessionPrefix}-rowsPerPage`, OPERATIONS_LIST_PAGE_SIZE, undefined, { popOnly: true });
+  const [sortField, setSortField] = useSessionState<ChangeRequestSortField>(
+    `${sessionPrefix}-sortField`,
+    ChangeRequestSortField.UpdatedOn,
+    undefined,
+    { popOnly: true },
+  );
+  const [sortOrder, setSortOrder] = useSessionState<SortOrder>(
+    `${sessionPrefix}-sortOrder`,
+    SortOrder.DESC,
+    undefined,
+    { popOnly: true },
+  );
   const [isExporting, setIsExporting] = useState(false);
 
   const { data: filterMetadata } = useGetProjectFilters(projectId || "");
@@ -119,8 +134,26 @@ export default function ChangeRequestsPage(): JSX.Element {
     const isPresetMode = outstandingOnly || actionRequired || scheduledOnly;
     const effectiveFilters = isPresetMode ? {} : filters;
     const effectiveSearchTerm = isPresetMode ? "" : searchTerm;
-    return buildChangeRequestSearchRequest(effectiveFilters, effectiveSearchTerm, outstandingOnly, actionRequired, scheduledOnly, filterMetadata?.changeRequestStates);
-  }, [searchTerm, filters, outstandingOnly, actionRequired, scheduledOnly, filterMetadata?.changeRequestStates]);
+    return buildChangeRequestSearchRequest(
+      effectiveFilters,
+      effectiveSearchTerm,
+      outstandingOnly,
+      actionRequired,
+      scheduledOnly,
+      filterMetadata?.changeRequestStates,
+      sortField,
+      sortOrder,
+    );
+  }, [
+    searchTerm,
+    filters,
+    outstandingOnly,
+    actionRequired,
+    scheduledOnly,
+    filterMetadata?.changeRequestStates,
+    sortField,
+    sortOrder,
+  ]);
 
   const offset = (page - 1) * rowsPerPage;
 
@@ -246,6 +279,16 @@ export default function ChangeRequestsPage(): JSX.Element {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: SortOrder) => {
+    setSortOrder(value);
+    setPage(1);
+  };
+
+  const handleSortFieldChange = (value: string) => {
+    setSortField(value as ChangeRequestSortField);
     setPage(1);
   };
 
@@ -376,6 +419,11 @@ export default function ChangeRequestsPage(): JSX.Element {
         shownCount={changeRequests.length}
         totalCount={totalRecords}
         entityLabel={CHANGE_REQUESTS_ENTITY_LABEL}
+        sortFieldOptions={CHANGE_REQUESTS_SORT_FIELD_OPTIONS}
+        sortField={sortField}
+        onSortFieldChange={handleSortFieldChange}
+        sortOrder={sortOrder}
+        onSortOrderChange={handleSortChange}
         rightContent={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             {hideSearchPanel ? downloadResultsButton : null}
