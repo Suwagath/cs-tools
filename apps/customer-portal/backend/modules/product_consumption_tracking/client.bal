@@ -27,7 +27,7 @@ final http:Client productConsumptionTrackingClient = check new (productConsumpti
     auth: {...clientCredentialsOauth2Config},
     httpVersion: http:HTTP_1_1,
     http1Settings: {keepAlive: http:KEEPALIVE_NEVER},
-    timeout: 300.0,
+    timeout: TIMEOUT,
     retryConfig: {
         count: RETRY_COUNT,
         interval: RETRY_INTERVAL,

@@ -17,3 +17,4 @@
 const CONTENT_TYPE_APPLICATION_ZIP = "application/zip";
 const RETRY_COUNT = 3;
 const RETRY_INTERVAL = 2.0d;
+const TIMEOUT = 300.0d;
