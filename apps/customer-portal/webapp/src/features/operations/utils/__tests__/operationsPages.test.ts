@@ -30,7 +30,10 @@ import {
   resolveOutstandingCrStateIds,
   resolveScheduledCrStateIds,
 } from "@features/operations/utils/operationsPages";
-import { ChangeRequestFilterDefinitionId } from "@features/operations/types/changeRequests";
+import {
+  ChangeRequestFilterDefinitionId,
+  ChangeRequestSortField,
+} from "@features/operations/types/changeRequests";
 import {
   OperationsNavSegment,
   ServiceRequestCaseSortField,
@@ -197,10 +200,25 @@ describe("buildChangeRequestSearchRequest", () => {
     expect(req.filters?.stateKeys).not.toContain(-3);
   });
 
-  it("sorts by updatedOn descending", () => {
+  it("sorts by updatedOn descending by default", () => {
     const req = buildChangeRequestSearchRequest({}, "", false, false, false, allStates);
     expect(req.sortBy?.field).toBe("updatedOn");
     expect(req.sortBy?.order).toBe("desc");
+  });
+
+  it("applies custom sort field and order", () => {
+    const req = buildChangeRequestSearchRequest(
+      {},
+      "",
+      false,
+      false,
+      false,
+      allStates,
+      ChangeRequestSortField.CreatedOn,
+      SortOrder.ASC,
+    );
+    expect(req.sortBy?.field).toBe("createdOn");
+    expect(req.sortBy?.order).toBe("asc");
   });
 });
 
