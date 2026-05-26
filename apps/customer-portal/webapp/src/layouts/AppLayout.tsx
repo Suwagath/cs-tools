@@ -59,7 +59,6 @@ interface AppLayoutProps {
  */
 export default function AppLayout({ children }: AppLayoutProps): JSX.Element {
   const location = useLocation();
-  const mainContentRef = useRef<HTMLDivElement>(null);
   const { isLoading: isAuthLoading } = useAsgardeo();
   const { error: userDetailsError, isLoading: isUserDetailsLoading } =
     useGetUserDetails();
@@ -67,9 +66,7 @@ export default function AppLayout({ children }: AppLayoutProps): JSX.Element {
 
   // Scroll to top on route change
   useEffect(() => {
-    if (mainContentRef.current) {
-      mainContentRef.current.scrollTop = 0;
-    }
+    document.getElementById("main-scroll-container")?.scrollTo({ top: 0 });
   }, [location.pathname]);
 
   const theme = useTheme();
@@ -283,7 +280,6 @@ export default function AppLayout({ children }: AppLayoutProps): JSX.Element {
               />
             )}
             <Box
-              ref={mainContentRef}
               sx={{
                 flex: 1,
                 minHeight: 0,
