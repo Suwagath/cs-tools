@@ -89,27 +89,19 @@ service http:InterceptableService / on new http:Listener(9090) {
         };
     }
 
-    # Stream file bytes for `path` (share-relative). Requires Asgardeo `x-jwt-assertion` and the reader group.
+    # Stream file bytes for `path` (share-relative).
     #
-    # + ctx - Request context (populated by `JwtInterceptor` with `HEADER_USER_INFO`)
+    # + ctx - Request context
     # + path - Share-relative file path (query parameter)
-    # + return - Raw bytes with `Content-Type` and `Content-Disposition`, or `400` / `403` / `404` / `500` with JSON body
-    resource function get file(http:RequestContext ctx, string path) returns http:Response|http:BadRequest|http:Forbidden|
+    # + return - Raw bytes with `Content-Type` and `Content-Disposition`, or `400` / `404` / `500` with JSON body
+    resource function get file(http:RequestContext ctx, string path) returns http:Response|http:BadRequest|
             http:NotFound|http:InternalServerError {
 
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
         if userInfo is error {
-            return <http:BadRequest>{
+            return <http:InternalServerError>{
                 body: {
-                    message: "User information header not found!"
-                }
-            };
-        }
-
-        if !authorization:checkPermissions([authorization:authorizedRoles.securityPatchesUserRole], userInfo.groups) {
-            return <http:Forbidden>{
-                body: {
-                    message: "Insufficient privileges!"
+                    message: ERR_MSG_USER_INFO_HEADER_NOT_FOUND
                 }
             };
         }

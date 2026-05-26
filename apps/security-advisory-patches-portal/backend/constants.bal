@@ -25,3 +25,6 @@ const ERR_MSG_FILE_NOT_FOUND = "File or directory path not found in file share";
 
 # Message for `GET /file` when the `path` query is missing, malformed, or fails percent-decoding.
 const ERR_MSG_INVALID_PATH = "Invalid path format";
+
+# Message for when `JwtInterceptor` did not set context.
+const ERR_MSG_USER_INFO_HEADER_NOT_FOUND = "User information header not found!";
