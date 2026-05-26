@@ -24,6 +24,34 @@ import RootLandingPage from '@src/view/RootLanding/RootLandingPage';
 import NotFoundPage from '@src/view/NotFound/NotFoundPage';
 import { SEC_ADV_REDIRECT_PATH_KEY, pathnameEndsWithPdf } from '@src/constants/constants';
 
+const LOADING_SX = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '100vh',
+  bgcolor: '#f5f5f5',
+  gap: 3,
+} as const;
+
+const LoadingScreen: React.FC<{ message: string }> = ({ message }) => (
+  <Box sx={LOADING_SX}>
+    <CircularProgress size={60} />
+    <Box sx={{ textAlign: 'center' }}>
+      <Box
+        component="span"
+        sx={{
+          fontSize: '1.1rem',
+          color: 'text.secondary',
+          fontWeight: 500,
+        }}
+      >
+        {message}
+      </Box>
+    </Box>
+  </Box>
+);
+
 const AppHandler: React.FC = () => {
   const { appSignOut } = useAppAuth();
   const { isAuthenticated, isLoading, user } = useAppSelector((state) => state.auth);
@@ -66,70 +94,17 @@ const AppHandler: React.FC = () => {
   }, [location.pathname, location.search]);
 
   if (isLoading || !isAuthenticated) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          bgcolor: '#f5f5f5',
-          gap: 3,
-        }}
-      >
-        <CircularProgress size={60} />
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            component="span"
-            sx={{
-              fontSize: '1.1rem',
-              color: 'text.secondary',
-              fontWeight: 500,
-            }}
-          >
-            Getting things ready...
-          </Box>
-        </Box>
-      </Box>
-    );
+    return <LoadingScreen message="Getting things ready..." />;
   }
 
   const pathOnly = location.pathname;
   const oauthPdfResume =
-    typeof window !== 'undefined' &&
     (pathOnly === '/' || pathOnly === '') &&
     !!sessionStorage.getItem(SEC_ADV_REDIRECT_PATH_KEY) &&
     pathnameEndsWithPdf(sessionStorage.getItem(SEC_ADV_REDIRECT_PATH_KEY)!.split('?')[0]);
 
   if (oauthPdfResume) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          bgcolor: '#f5f5f5',
-          gap: 3,
-        }}
-      >
-        <CircularProgress size={60} />
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            component="span"
-            sx={{
-              fontSize: '1.1rem',
-              color: 'text.secondary',
-              fontWeight: 500,
-            }}
-          >
-            Opening your link…
-          </Box>
-        </Box>
-      </Box>
-    );
+    return <LoadingScreen message="Opening your link…" />;
   }
 
   if (pathOnly === '/' || pathOnly === '') {

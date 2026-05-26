@@ -18,7 +18,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { SecureApp, useAuthContext } from '@asgardeo/auth-react';
 import { Box, CircularProgress } from '@mui/material';
 import { useAppDispatch } from '@src/slices/store';
-import { setAuthenticated, setUser, setLoading } from '@src/slices/authSlice/auth';
+import { setAuthenticated, setUser, setLoading, logout } from '@src/slices/authSlice/auth';
 import { APIService } from '@src/utils/apiService';
 import { UserInfo } from '@src/types/types';
 import { SEC_ADV_REDIRECT_PATH_KEY, SEC_ADV_SIGN_IN_INIT_KEY, pathnameEndsWithPdf } from '@src/constants/constants';
@@ -64,8 +64,7 @@ export const AppAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ).catch((error) => {
         console.error('Auth initialization error:', error);
         sessionStorage.setItem(SEC_ADV_SIGN_IN_INIT_KEY, 'false');
-        dispatch(setAuthenticated(false));
-        dispatch(setLoading(false));
+        dispatch(logout());
       });
     } else if (!isSignInInitiated) {
       sessionStorage.setItem(SEC_ADV_SIGN_IN_INIT_KEY, 'true');
@@ -84,8 +83,7 @@ export const AppAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       dispatch(setLoading(true));
       await signOut();
-      dispatch(setAuthenticated(false));
-      dispatch(setUser(null));
+      dispatch(logout());
       sessionStorage.setItem(SEC_ADV_SIGN_IN_INIT_KEY, 'false');
     } catch (error) {
       console.error('Sign out error:', error);

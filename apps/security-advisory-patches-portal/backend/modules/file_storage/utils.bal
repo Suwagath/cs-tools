@@ -59,14 +59,11 @@ public isolated function normalizePath(string path, boolean forSdkCall = false) 
 
     string normalized = path.startsWith(FOLDER_DELIMITER) ? path.substring(1) : path;
 
-    if !normalized.endsWith(FOLDER_DELIMITER) {
+    if !forSdkCall && !normalized.endsWith(FOLDER_DELIMITER) {
         normalized = normalized + FOLDER_DELIMITER;
     }
 
     if forSdkCall {
-        if normalized.endsWith(FOLDER_DELIMITER) {
-            normalized = normalized.substring(0, normalized.length() - 1);
-        }
         normalized = check encodePathSegments(normalized);
     }
 
