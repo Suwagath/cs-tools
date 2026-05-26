@@ -50,7 +50,7 @@ export const AppAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
           dispatch(setAuthenticated(true));
           dispatch(setLoading(false));
 
-          if (typeof window !== 'undefined' && pathnameEndsWithPdf(window.location.pathname)) {
+          if (pathnameEndsWithPdf(window.location.pathname)) {
             sessionStorage.removeItem(SEC_ADV_REDIRECT_PATH_KEY);
           }
 
@@ -74,7 +74,7 @@ export const AppAuthProvider: React.FC<{ children: React.ReactNode }> = ({ child
         sessionStorage.setItem(SEC_ADV_REDIRECT_PATH_KEY, path);
       }
       signIn();
-    } else if (typeof window !== 'undefined' && pathnameEndsWithPdf(window.location.pathname)) {
+    } else if (pathnameEndsWithPdf(window.location.pathname)) {
       sessionStorage.setItem(SEC_ADV_REDIRECT_PATH_KEY, window.location.pathname + window.location.search);
       signIn();
     }

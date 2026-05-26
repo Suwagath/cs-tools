@@ -15,15 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-const DASH_LITERAL_HOLD = '\uE000';
-
 /** Decode legacy doubled-hyphen encoding inside a path segment. */
 function unescapeDashSegment(raw: string): string {
-  return raw
-    .split('--')
-    .map((chunk) => chunk.replace(/-/g, ' '))
-    .join(DASH_LITERAL_HOLD)
-    .replace(new RegExp(DASH_LITERAL_HOLD, 'g'), '-');
+  const parts = raw.split('--');
+  return parts.map((chunk, i) => (i === 0 ? chunk : `-${chunk.replace(/-/g, ' ')}`)).join('');
 }
 
 /** Decode one URL path segment: `decodeURIComponent`, plus optional legacy `--` / `-` space rules. */
