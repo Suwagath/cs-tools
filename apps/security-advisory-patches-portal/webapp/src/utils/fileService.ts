@@ -19,12 +19,12 @@ import { APIService } from './apiService';
 import { AppConfig } from '@src/config/config';
 
 /**
- * Download advisory bytes from `GET /file?path=…`. The shared `APIService` must attach **`x-jwt-assertion`**
- * (ID token) on each request; see `webapps/webapp-template` for the same pattern.
+ * Download advisory bytes from `GET /files/{id}` where **`id`** is `encodeURIComponent(shareRelativePath)`.
+ * The shared `APIService` must attach **`x-jwt-assertion`** (ID token) on each request.
  */
 export const downloadSecurityAdvisory = async (path: string): Promise<Blob> => {
-  const response = await APIService.getInstance().get(AppConfig.downloadFileUrl, {
-    params: { path },
+  const id = encodeURIComponent(path);
+  const response = await APIService.getInstance().get(`${AppConfig.downloadFilesBaseUrl}/${id}`, {
     responseType: 'blob',
   });
   return response.data;

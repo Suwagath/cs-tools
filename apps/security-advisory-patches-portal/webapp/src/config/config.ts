@@ -53,8 +53,7 @@ const serviceBaseUrl = window.config?.BACKEND_BASE_URL ?? '';
 /** Default app title if `APP_NAME` is not set in `config.js`. */
 export const APP_NAME = window.config?.APP_NAME ?? 'Security Advisory Patches Portal';
 
-/** Resolved API URLs for the SPA. */
+/** Base URL for `GET /files/{id}` (share path as one encoded segment). */
 export const AppConfig = {
-  /** `GET /file` on the Ballerina backend (append `?path=…`). */
-  downloadFileUrl: `${serviceBaseUrl}/file`,
+  downloadFilesBaseUrl: `${serviceBaseUrl}/files`,
 };

@@ -17,13 +17,13 @@
 # Message returned in `GET /health` when the file share dependency is healthy.
 const MSG_SERVICE_HEALTHY = "File Share backend service is running";
 
-# Generic error message for `GET /file` when download fails for reasons other than Azure 404.
+# Generic error message for `GET /files/[id]` when download fails for reasons other than Azure 404.
 const ERR_MSG_DOWNLOAD_SECURITY_ADVISORY = "Error occurred while downloading security advisory";
 
-# Message for `GET /file` when Azure reports the path as missing (`NotFoundError`).
+# Message for `GET /files/[id]` when Azure reports the path as missing (`NotFoundError`).
 const ERR_MSG_FILE_NOT_FOUND = "File or directory path not found in file share";
 
-# Message for `GET /file` when the `path` query is missing, malformed, or fails percent-decoding.
+# Message for `GET /files/[id]` when `id` is malformed or fails percent-decoding to a valid share path.
 const ERR_MSG_INVALID_PATH = "Invalid path format";
 
 # Message for when `JwtInterceptor` did not set context.

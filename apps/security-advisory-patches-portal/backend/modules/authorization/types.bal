@@ -15,8 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# User info custom type for Asgardeo token (subset of ID token claims used by this API).
-# `json...` allows `cloneWithType` from `jwt:Payload` while standard claims remain in the map.
+# User info custom type for Asgardeo token.
 public type CustomJwtPayload record {|
     # User email
     string email;
@@ -27,6 +26,6 @@ public type CustomJwtPayload record {|
 
 # Application specific role mapping.
 public type PatchesPortalRoles record {|
-    # Asgardeo group name that may download advisory PDFs via `GET /file`.
+    # Asgardeo group name.
     string securityPatchesUserRole;
 |};

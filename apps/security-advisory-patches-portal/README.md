@@ -31,7 +31,7 @@ The webapp does **not** upload files to Azure. Publishing is always done **outsi
                                                     └──────────────────┘
 ```
 
-- **Frontend**: Reads runtime settings from `public/config.js`. After sign-in, paths ending in **`.pdf`** map to `GET /file?path=…` (share-relative path); the PDF is shown in-page. Other paths show **404** unless you are on **`/`** (short help text).
+- **Frontend**: Reads runtime settings from `public/config.js`. After sign-in, paths ending in **`.pdf`** map to **`GET /files/{id}`** where **`id`** is the share-relative path as **one** URL-encoded segment (`encodeURIComponent`); the PDF is shown in-page. Other paths show **404** unless you are on **`/`** (short help text).
 - **Backend**: Uses `ballerinax/azure_storage_service.files` to **download file bytes only**. It performs a **health check** against the file share at startup.
 
 ---
@@ -75,7 +75,7 @@ Use Portal, Storage Explorer, AzCopy, or automation—same as any Azure Files wo
 
 ### 4.3 Naming and path rules
 
-The backend validates `path` using the same segment rules as the file-storage module (no `..`, no control characters, sane length) before calling Azure.
+The backend validates the decoded share path (from **`id`**) using the same segment rules as the file-storage module (no `..`, no control characters, sane length) before calling Azure.
 
 ### 4.4 When updates appear
 
@@ -89,7 +89,7 @@ The next successful fetch loads the **current** bytes from Azure (reload the pag
 
 | Path | Purpose |
 |------|---------|
-| `backend/` | Ballerina package `security_advisories_fileshare` — `modules/authorization` (JWT / roles), `modules/file_storage`, `GET /health`, `GET /file` |
+| `backend/` | Ballerina package `security_advisories_fileshare` — `modules/authorization` (JWT / roles), `modules/file_storage`, `GET /health`, `GET /files/[id]` |
 | `webapp/` | React SPA — Asgardeo, Redux (auth only), PDF viewer |
 
 ### 5.2 Prerequisites
@@ -101,7 +101,7 @@ The next successful fetch loads the **current** bytes from Azure (reload the pag
 
 `Config.toml` / `Config.toml.local` follow the same layout as [`webapps/backend-template`](../../webapps/backend-template): **Azure file share** settings plus **authorization** (Asgardeo group → API access).
 
-**Authorization** (required for `GET /file`; see `backend/modules/authorization/`):
+**Authorization** (required for `GET /files/[id]`; see `backend/modules/authorization/`):
 
 ```toml
 [security_advisories_fileshare.authorization.authorizedRoles]
@@ -109,7 +109,7 @@ securityPatchesUserRole = "<Asgardeo-group-name>"
 ```
 
 - Set `securityPatchesUserRole` to the **exact** string that appears in the ID token **`groups`** array.
-- For `/file`, the SPA sends the Asgardeo **ID token** on **`x-jwt-assertion`**. OIDC scopes are set in `webapp/src/config/config.ts` to **`openid`**, **`email`**, and **`groups`** so the ID token includes **`email`** and **`groups`** for `CustomJwtPayload`.
+- For **`/files/...`**, the SPA sends the Asgardeo **ID token** on **`x-jwt-assertion`**. OIDC scopes are set in `webapp/src/config/config.ts` to **`openid`**, **`email`**, and **`groups`** so the ID token includes **`email`** and **`groups`** for `CustomJwtPayload`.
 - **`GET /health`** does **not** require a JWT (liveness / probes). **`OPTIONS`** preflight is also allowed without JWT.
 
 **File share** (same `security_advisories_fileshare.file_storage` tables as before). Then run:
@@ -122,16 +122,16 @@ Listener **9090** by default; startup fails fast if the share is unreachable.
 
 ### 5.4 Backend HTTP API
 
-| Method | Path | Query | Description |
-|--------|------|--------|-------------|
-| `GET` | `/health` | — | Liveness: file share reachable (**no** `x-jwt-assertion`) |
-| `GET` | `/file` | `path` required | PDF bytes; requires **`x-jwt-assertion`** (ID token) and membership in the **`securityPatchesUserRole`** Asgardeo group; `Content-Disposition: inline` |
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | Liveness: file share reachable (**no** `x-jwt-assertion`) |
+| `GET` | `/files/[id]` | **`id`**: single path segment — percent-encode the whole share-relative path (e.g. `encodeURIComponent("Security Patches/x.pdf")`). PDF bytes; requires **`x-jwt-assertion`** (ID token) and **`securityPatchesUserRole`**; `Content-Disposition: inline` |
 
-The server runs **`url:decode`** on the `path` query value (`UTF-8`) so `%2F` becomes `/` when needed.
+The server runs **`url:decode`** on **`id`** (`UTF-8`) after routing so nested `%` sequences resolve to the share-relative path.
 
-Missing/invalid JWT or wrong groups → **403** / **500** as returned by the JWT interceptor; missing `path` context after auth → **400**. Invalid `path` → **400**; path valid but missing on the share (Azure **404**) → **404**; other download failures → **500**.
+Missing/invalid JWT or wrong groups → **403** / **500** as returned by the JWT interceptor; missing user context after auth → **400**. Invalid path after decode → **400**; path valid but missing on the share (Azure **404**) → **404**; other download failures → **500**.
 
-The `path` query must be the **share-relative** path Azure expects (folder names, spaces, casing). The SPA maps lowercase **kebab-case** directory segments in the URL to that shape before calling `/file`; you can also send the literal path with **`%20`** for spaces (e.g. `Security%20Patches/...`).
+**`id`** must represent the **share-relative** path Azure expects (folder names, spaces, casing). The SPA maps lowercase **kebab-case** directory segments in the browser URL to that shape, then encodes the full path for **`/files/{id}`**; you can also call the API with the literal path encoded (e.g. `Security%20Patches%2F...`).
 
 ### 5.5 Webapp configuration (`config.js`)
 
@@ -144,7 +144,7 @@ The app loads `public/config.js` before the bundle. Define `window.config` with 
 | `ASGARDEO_CLIENT_ID` | Asgardeo client ID |
 | `AUTH_SIGN_IN_REDIRECT_URL` | Post-login redirect URI (typically site root `/`) |
 | `AUTH_SIGN_OUT_REDIRECT_URL` | Post-logout redirect |
-| `BACKEND_BASE_URL` | API origin for `/health` and `/file` |
+| `BACKEND_BASE_URL` | API origin for `/health` and `/files` |
 
 Example:
 
@@ -177,9 +177,9 @@ The backend reads **`x-jwt-assertion`** (JWT decode) and checks Asgardeo **`grou
 | Symptom | Things to check |
 |--------|------------------|
 | Backend won’t start | Share name, credentials, firewall |
-| 400 on `/file` | Path fails segment validation (e.g. `..`, empty segment); or missing user context after auth |
-| 403 on `/file` | User not in `securityPatchesUserRole` group; ID token missing `groups` |
-| 400 "User information header not found!" | Request reached `/file` without expected auth context; verify JWT interceptor wiring and that SPA sends `x-jwt-assertion` (see `apiService.ts`) |
+| 400 on `/files/...` | Path fails segment validation (e.g. `..`, empty segment); or missing user context after auth; or bad **`id`** encoding |
+| 403 on `/files/...` | User not in `securityPatchesUserRole` group; ID token missing `groups` |
+| 400 "User information header not found!" | Request reached `/files/...` without expected auth context; verify JWT interceptor wiring and that SPA sends `x-jwt-assertion` (see `apiService.ts`) |
 | 500 "Missing invoker info header" | SPA not sending `x-jwt-assertion` (see `apiService.ts`) |
 | 500 "Malformed Invoker info object!" | Decode the ID token: it must include **`email`** and **`groups`**. Use scopes **`openid`**, **`email`**, **`groups`** in `webapp/src/config/config.ts`; in Asgardeo enable those attributes on the app and assign the user to a group matching `securityPatchesUserRole` |
 | Blank PDF | Wrong path mapping vs Azure layout; browser blocking blob iframe |

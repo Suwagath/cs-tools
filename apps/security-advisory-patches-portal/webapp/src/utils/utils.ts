@@ -48,7 +48,7 @@ function slugFolderSegmentToAzureTitle(segment: string): string {
 }
 
 /**
- * Map the browser pathname to the share-relative path sent to `/file`.
+ * Map the browser pathname to the share-relative path sent to **`GET /files/{id}`** (`id` = encoded path).
  * - Strips optional leading `patches` segment.
  * - Requires the last segment to end in `.pdf`.
  * - Rewrites lowercase kebab directory segments to Azure-style titled folder names; does not alter the PDF file name segment.

@@ -89,12 +89,13 @@ service http:InterceptableService / on new http:Listener(9090) {
         };
     }
 
-    # Stream file bytes for `path` (share-relative).
+    # Stream file bytes for a share-relative path carried in one URL path segment (`id`).
+    #
     #
     # + ctx - Request context
-    # + path - Share-relative file path (query parameter)
+    # + id - URL-decoded share-relative file path (after the framework decodes the path segment)
     # + return - Raw bytes with `Content-Type` and `Content-Disposition`, or `400` / `404` / `500` with JSON body
-    resource function get file(http:RequestContext ctx, string path) returns http:Response|http:BadRequest|
+    resource function get files/[string id](http:RequestContext ctx) returns http:Response|http:BadRequest|
             http:NotFound|http:InternalServerError {
 
         authorization:CustomJwtPayload|error userInfo = ctx.getWithType(authorization:HEADER_USER_INFO);
@@ -106,9 +107,9 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error decodedPath = url:decode(path, "UTF-8");
+        string|error decodedPath = url:decode(id, "UTF-8");
         if decodedPath is error {
-            log:printError(string `Invalid path query encoding: ${path}`, decodedPath);
+            log:printError(string `Invalid file id encoding: ${id}`, decodedPath);
             return <http:BadRequest>{body: {message: ERR_MSG_INVALID_PATH}};
         }
         string filePath = decodedPath;
