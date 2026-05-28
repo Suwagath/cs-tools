@@ -22,6 +22,7 @@ import {
   stripHtml,
 } from "@features/support/utils/support";
 import { buildCsvContent, downloadCsvFile } from "@utils/csv";
+import { downloadPdfFile } from "@utils/pdf";
 
 export const ALL_CASES_CSV_HEADERS = [
   "Number",
@@ -217,4 +218,33 @@ export function downloadAllCasesListCsv(
   projectId?: string,
 ): void {
   downloadCaseListCsv(cases, "allCases", "cases", projectId);
+}
+
+/**
+ * Downloads case list rows as a PDF file.
+ *
+ * @param cases - Cases to export.
+ * @param variant - Column set (all cases includes severity; withType includes type).
+ * @param filenamePrefix - Download file prefix.
+ * @param projectId - Project id for filename.
+ */
+export function downloadCaseListPdf(
+  cases: CaseListItem[],
+  variant: CaseListCsvExportVariant,
+  filenamePrefix: string,
+  projectId?: string,
+): void {
+  const headers =
+    variant === "allCases"
+      ? [...ALL_CASES_CSV_HEADERS]
+      : [...CASE_LIST_EXPORT_CSV_HEADERS];
+  const rows =
+    variant === "allCases"
+      ? mapCasesToCsvRows(cases)
+      : mapCaseListExportCsvRows(cases);
+  const datePart = new Date().toISOString().slice(0, 10);
+  const projectPart = projectId ? `-${projectId}` : "";
+  const filename = `${filenamePrefix}${projectPart}-${datePart}.pdf`;
+  const title = `${filenamePrefix.replace(/-/g, " ")} — ${datePart}`;
+  downloadPdfFile(filename, title, headers, rows);
 }
