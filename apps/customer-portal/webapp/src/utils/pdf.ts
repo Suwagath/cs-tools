@@ -17,6 +17,11 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+export type PdfColumnStyle = {
+  cellWidth: number;
+  halign?: "left" | "center" | "right";
+};
+
 /**
  * Generates and downloads a PDF file with a titled table.
  *
@@ -24,23 +29,39 @@ import autoTable from "jspdf-autotable";
  * @param title - Heading text printed above the table.
  * @param headers - Column header labels.
  * @param rows - Table data rows aligned with headers.
+ * @param columnStyles - Per-column width/alignment overrides (keyed by column index).
  */
 export function downloadPdfFile(
   filename: string,
   title: string,
   headers: string[],
   rows: string[][],
+  columnStyles?: Record<number, PdfColumnStyle>,
 ): void {
-  const doc = new jsPDF({ orientation: "landscape" });
-  doc.setFontSize(13);
-  doc.text(title, 14, 15);
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  doc.setFontSize(12);
+  doc.setTextColor(40, 40, 40);
+  doc.text(title, 14, 14);
   autoTable(doc, {
     head: [headers],
     body: rows,
-    startY: 22,
-    styles: { fontSize: 7.5, cellPadding: 2, overflow: "linebreak" },
-    headStyles: { fillColor: [33, 83, 138], textColor: 255 },
+    startY: 20,
+    margin: { left: 14, right: 14 },
+    styles: {
+      fontSize: 7.5,
+      cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+      overflow: "linebreak",
+      valign: "middle",
+    },
+    headStyles: {
+      fillColor: [33, 83, 138],
+      textColor: 255,
+      fontStyle: "bold",
+      fontSize: 7.5,
+    },
     alternateRowStyles: { fillColor: [245, 247, 250] },
+    columnStyles: columnStyles ?? {},
+    tableWidth: "auto",
   });
   doc.save(filename);
 }
