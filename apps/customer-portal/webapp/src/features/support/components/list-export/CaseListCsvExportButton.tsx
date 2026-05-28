@@ -37,6 +37,8 @@ export type CaseListCsvExportButtonProps = {
   emptyMessage?: string;
 };
 
+type ExportFormat = "csv" | "pdf";
+
 /**
  * Button that exports the current case list search/filter result set as CSV.
  *

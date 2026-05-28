@@ -49,10 +49,10 @@ export default function ChangeRequestsCsvExportButton({
 }: ChangeRequestsCsvExportButtonProps): JSX.Element {
   const authFetch = useAuthApiClient();
   const { showError } = useErrorBanner();
-  const [isExporting, setIsExporting] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
   const isExportingRef = useRef(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  const handleDownload = useCallback(async () => {
     if (!projectId || isExportingRef.current) {
       return;
     }
