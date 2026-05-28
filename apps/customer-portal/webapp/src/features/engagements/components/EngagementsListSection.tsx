@@ -103,7 +103,7 @@ export default function EngagementsListSection({
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <FormControl fullWidth size="small">
                     <InputLabel id="eng-status-label">Status</InputLabel>
-                    <Select
+                    <Select<string[]>
                       multiple
                       labelId="eng-status-label"
                       value={filters.statusIds ?? []}
