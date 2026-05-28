@@ -43,6 +43,7 @@ export default function EngagementsPage(): JSX.Element {
 
   const {
     projectId,
+    projectName,
     engagementSearchRequest,
     loadedCasesForExport,
     hasCasesResponse,
@@ -86,6 +87,7 @@ export default function EngagementsPage(): JSX.Element {
   const downloadResultsButton = projectId ? (
     <CaseListCsvExportButton
       projectId={projectId}
+      projectName={projectName}
       caseSearchRequest={engagementSearchRequest}
       filenamePrefix="engagements"
       prefetchedCases={loadedCasesForExport}

@@ -29,8 +29,11 @@ import {
   downloadChangeRequestsPdf,
 } from "@features/operations/utils/changeRequestsCsvExport";
 
+type ExportFormat = "csv" | "pdf";
+
 export type ChangeRequestsCsvExportButtonProps = {
   projectId: string;
+  projectName?: string;
   searchRequest: Omit<ChangeRequestSearchRequest, "pagination">;
   prefetchedItems?: ChangeRequestItem[];
   totalRecords?: number;
@@ -45,6 +48,7 @@ export type ChangeRequestsCsvExportButtonProps = {
  */
 export default function ChangeRequestsCsvExportButton({
   projectId,
+  projectName,
   searchRequest,
   prefetchedItems = [],
   totalRecords = 0,
@@ -87,9 +91,9 @@ export default function ChangeRequestsCsvExportButton({
         }
 
         if (format === "csv") {
-          downloadChangeRequestsCsv(items, projectId);
+          downloadChangeRequestsCsv(items, projectId, projectName);
         } else {
-          downloadChangeRequestsPdf(items, projectId);
+          downloadChangeRequestsPdf(items, projectId, projectName);
         }
       } catch (error) {
         const message =
@@ -100,7 +104,7 @@ export default function ChangeRequestsCsvExportButton({
         setExportingFormat(null);
       }
     },
-    [authFetch, prefetchedItems, projectId, searchRequest, showError, totalRecords],
+    [authFetch, prefetchedItems, projectId, projectName, searchRequest, showError, totalRecords],
   );
 
   const isDisabled = disabled || isExporting || !projectId;
