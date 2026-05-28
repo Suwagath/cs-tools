@@ -15,12 +15,14 @@
 // under the License.
 
 import {
+  Box,
   Checkbox,
   FormControl,
   Grid,
   InputLabel,
   MenuItem,
   Select,
+  Tooltip,
   Typography,
 } from "@wso2/oxygen-ui";
 import type { JSX, UIEvent } from "react";
@@ -167,10 +169,24 @@ export default function ListFilters({
                   onChange={handleMultiChange(def.filterKey)}
                   renderValue={(selected) => {
                     if (!Array.isArray(selected) || selected.length === 0) return "";
-                    if (selected.length === 1) {
-                      return options.find((o) => o.value === selected[0])?.label ?? selected[0];
-                    }
-                    return `${selected.length} statuses selected`;
+                    const labels = selected.map((v) => options.find((o) => o.value === v)?.label ?? v);
+                    const displayText = labels.join(", ");
+                    if (labels.length === 1) return displayText;
+                    return (
+                      <Tooltip title={displayText} placement="top">
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {displayText}
+                        </Box>
+                      </Tooltip>
+                    );
                   }}
                 >
                   {hasNoOptions ? (

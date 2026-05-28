@@ -16,6 +16,7 @@
 
 import type { JSX } from "react";
 import {
+  Box,
   Checkbox,
   Divider,
   FormControl,
@@ -23,6 +24,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Tooltip,
   Typography,
 } from "@wso2/oxygen-ui";
 import type { SelectChangeEvent } from "@wso2/oxygen-ui";
@@ -111,10 +113,24 @@ export default function EngagementsListSection({
                       }
                       renderValue={(selected) => {
                         if (!Array.isArray(selected) || selected.length === 0) return "";
-                        if (selected.length === 1) {
-                          return filterMetadata.caseStates?.find((s) => s.id === selected[0])?.label ?? selected[0];
-                        }
-                        return `${selected.length} statuses selected`;
+                        const labels = selected.map((v) => filterMetadata.caseStates?.find((s) => s.id === v)?.label ?? v);
+                        const displayText = labels.join(", ");
+                        if (labels.length === 1) return displayText;
+                        return (
+                          <Tooltip title={displayText} placement="top">
+                            <Box
+                              component="span"
+                              sx={{
+                                display: "block",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {displayText}
+                            </Box>
+                          </Tooltip>
+                        );
                       }}
                     >
                       {filterMetadata.caseStates.map((s) => (
