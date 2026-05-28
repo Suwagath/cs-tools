@@ -14,22 +14,18 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { type JSX } from "react";
+import { configureStore } from '@reduxjs/toolkit';
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import authReducer from './authSlice/auth';
 
-/**
- * Renders an optional HTML banner above the main header, sourced from
- * CUSTOMER_PORTAL_TOP_BANNER_HTML in config.js.
- */
-export default function TopBanner(): JSX.Element | null {
-  const enabled = window.config?.CUSTOMER_PORTAL_TOP_BANNER_ENABLED;
-  const html = window.config?.CUSTOMER_PORTAL_TOP_BANNER_HTML;
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+  },
+});
 
-  if (!enabled || !html) return null;
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
-  return (
-    <div
-      style={{ display: "block", lineHeight: 0, fontSize: 0, overflow: "hidden" }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-}
+export const useAppDispatch: () => AppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

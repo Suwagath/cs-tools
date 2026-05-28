@@ -60,6 +60,8 @@ public type CaseSearchFilters record {|
     entity:CaseType[] caseTypes?;
     # Severity ID
     int severityId?;
+    # List of case severity keys
+    int[] severityIds?;
     # Engagement type keys (required for engagement type cases)
     int[] engagementTypeKeys?;
     # Closed start date
@@ -68,6 +70,8 @@ public type CaseSearchFilters record {|
     entity:UtcDateTimeString closedEndDate?;
     # Deployment ID
     string deploymentId?;
+    # Deployment ID list
+    entity:IdString[] deploymentIds?;
     # Case created by the logged in user
     boolean createdByMe?;
 |};
@@ -1521,6 +1525,8 @@ public type ChangeRequestSearchPayload record {|
         # End date for closed date filter (UTC format: YYYY-MM-DDTHH:MM:SSZ)
         entity:UtcDateTimeString closedEndDate?;
     |} filters?;
+    # Sort configuration
+    entity:SortBy sortBy?;
     # Pagination details
     entity:Pagination pagination?;
 |};
