@@ -15,6 +15,7 @@
 // under the License.
 
 import {
+  Checkbox,
   FormControl,
   Grid,
   InputLabel,
@@ -31,6 +32,7 @@ export interface FilterDefinition {
   filterKey: string;
   metadataKey: string;
   useLabelAsValue?: boolean;
+  multiSelect?: boolean;
 }
 
 export interface FilterOption {
@@ -39,13 +41,13 @@ export interface FilterOption {
 }
 
 export interface ListFiltersPanelProps<
-  T extends Record<string, string | undefined>,
+  T extends Record<string, string | string[] | undefined>,
 > {
   filterDefinitions: FilterDefinition[];
   filters: T;
   /** Resolves the option list for a given definition — handles any label transforms */
   resolveOptions: (def: FilterDefinition) => FilterOption[];
-  onFilterChange: (field: string, value: string) => void;
+  onFilterChange: (field: string, value: string | string[]) => void;
   /** Defaults to { xs: 12, sm: 6, md: 3 } */
   gridSize?: { xs?: number; sm?: number; md?: number };
 }
@@ -53,13 +55,14 @@ export interface ListFiltersPanelProps<
 /**
  * ListFiltersPanel renders a grid of Select dropdowns driven by a filter
  * definitions array. Callers supply a resolveOptions callback to handle any
- * per-field label transformations.
+ * per-field label transformations. Status-type filters render as multi-select
+ * with checkboxes; all other filters remain single-select.
  *
  * @param {ListFiltersPanelProps} props - Filter definitions, values, and handlers.
  * @returns {JSX.Element} The rendered filter dropdowns.
  */
 export default function ListFiltersPanel<
-  T extends Record<string, string | undefined>,
+  T extends Record<string, string | string[] | undefined>,
 >({
   filterDefinitions,
   filters,
@@ -67,10 +70,16 @@ export default function ListFiltersPanel<
   onFilterChange,
   gridSize = { xs: 12, sm: 6, md: 3 },
 }: ListFiltersPanelProps<T>): JSX.Element {
-  const handleSelectChange =
+  const handleSingleChange =
     (field: string) => (event: SelectChangeEvent<string | string[]>) => {
       const val = event.target.value;
       onFilterChange(field, Array.isArray(val) ? (val[0] ?? "") : val);
+    };
+
+  const handleMultiChange =
+    (field: string) => (event: SelectChangeEvent<string[]>) => {
+      const val = event.target.value as string[];
+      onFilterChange(field, val);
     };
 
   return (
@@ -79,6 +88,39 @@ export default function ListFiltersPanel<
         const { label, allLabel } = deriveFilterLabels(def.id);
         const options = resolveOptions(def);
 
+        if (def.multiSelect) {
+          const selectedValues = (filters[def.filterKey] as string[] | undefined) ?? [];
+          return (
+            <Grid key={def.id} size={gridSize}>
+              <FormControl fullWidth size="small">
+                <InputLabel id={`${def.id}-label`}>{label}</InputLabel>
+                <Select
+                  multiple
+                  labelId={`${def.id}-label`}
+                  id={def.id}
+                  value={selectedValues}
+                  label={label}
+                  onChange={handleMultiChange(def.filterKey)}
+                  renderValue={(selected) => {
+                    if (!Array.isArray(selected) || selected.length === 0) return "";
+                    if (selected.length === 1) {
+                      return options.find((o) => o.value === selected[0])?.label ?? selected[0];
+                    }
+                    return `${selected.length} ${label.toLowerCase()}s selected`;
+                  }}
+                >
+                  {options.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Checkbox checked={selectedValues.includes(option.value)} size="small" />
+                      <Typography variant="body2" sx={{ ml: 1 }}>{option.label}</Typography>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          );
+        }
+
         return (
           <Grid key={def.id} size={gridSize}>
             <FormControl fullWidth size="small">
@@ -86,9 +128,9 @@ export default function ListFiltersPanel<
               <Select
                 labelId={`${def.id}-label`}
                 id={def.id}
-                value={filters[def.filterKey] || ""}
+                value={(filters[def.filterKey] as string | undefined) || ""}
                 label={label}
-                onChange={handleSelectChange(def.filterKey)}
+                onChange={handleSingleChange(def.filterKey)}
               >
                 <MenuItem value="">
                   <Typography variant="body2">{allLabel}</Typography>
