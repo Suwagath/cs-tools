@@ -20,7 +20,6 @@ import { attach, RaxConfig } from 'retry-axios';
 
 /**
  * Singleton Axios instance with Asgardeo ID token on each request and 401 retries (`retry-axios`).
- * Sends `Authorization: Bearer`; Choreo converts it to `x-jwt-assertion` when Pass end user attributes is enabled.
  */
 export class APIService {
   private static _instance: AxiosInstance;
