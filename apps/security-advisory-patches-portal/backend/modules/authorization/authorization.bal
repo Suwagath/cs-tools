@@ -34,7 +34,7 @@ public isolated service class JwtInterceptor {
             return ctx.next();
         }
 
-        string|error idToken = req.getHeader(JWT_ASSERTION_HEADER);
+        string|error idToken = req.getHeader(USER_ID_TOKEN_HEADER);
         if idToken is error {
             string errorMsg = "Missing invoker info header!";
             log:printError(errorMsg, idToken);
