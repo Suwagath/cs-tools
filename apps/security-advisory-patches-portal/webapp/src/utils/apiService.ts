@@ -20,6 +20,7 @@ import { attach, RaxConfig } from 'retry-axios';
 
 /**
  * Singleton Axios instance with Asgardeo ID token on each request and 401 retries (`retry-axios`).
+ * Sends the Asgardeo ID token as `Authorization: Bearer` (Choreo gateway) and `x-jwt-assertion` (Ballerina).
  */
 export class APIService {
   private static _instance: AxiosInstance;
@@ -93,7 +94,7 @@ export class APIService {
             const res = await APIService._callback();
             if (res.idToken) {
               config.headers.set('Authorization', `Bearer ${res.idToken}`);
-              config.headers.set('x-user-id-token', res.idToken);
+              config.headers.set('x-jwt-assertion', res.idToken);
             }
           } catch (error) {
             console.error('Failed to get token:', error);
