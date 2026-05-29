@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# HTTP header carrying the Asgardeo ID token (local and Choreo).
+# HTTP header carrying the Asgardeo ID token.
 public const USER_ID_TOKEN_HEADER = "x-user-id-token";
 
 # `http:RequestContext` attribute key for the decoded JWT payload after the interceptor succeeds.
